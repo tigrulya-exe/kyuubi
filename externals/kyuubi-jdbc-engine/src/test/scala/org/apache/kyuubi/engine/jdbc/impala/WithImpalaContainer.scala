@@ -16,41 +16,62 @@
  */
 package org.apache.kyuubi.engine.jdbc.impala
 
-import com.dimafeng.testcontainers.GenericContainer
-import org.apache.kyuubi.engine.jdbc.WithJdbcServerContainer
-import org.testcontainers.containers.wait.strategy.Wait._
-import org.testcontainers.containers.wait.strategy.{Wait, WaitAllStrategy}
-
+import java.io.File
 import java.time.Duration
 
+import com.dimafeng.testcontainers.{DockerComposeContainer, ExposedService}
+import org.testcontainers.containers.wait.strategy.DockerHealthcheckWaitStrategy
+
+import org.apache.kyuubi.Utils
+import org.apache.kyuubi.engine.jdbc.WithJdbcServerContainer
+
 trait WithImpalaContainer extends WithJdbcServerContainer {
+  private val METASTORE_SERVICE_NAME = "hms"
+  private val METASTORE_PORT = 9083
 
-  private val starrocksDockerImage = "starrocks/allin1-ubuntu:3.1.6"
+  private val STATESTORE_SERVICE_NAME = "statestored"
+  private val STATESTORE_PORT = 21050
 
-  private val STARROCKS_FE_MYSQL_PORT = 9030
-  private val STARROCKS_FE_HTTP_PORT = 8030
-  private val STARROCKS_BE_THRIFT_PORT = 9060
-  private val STARROCKS_BE_HTTP_PORT = 8040
-  private val STARROCKS_BE_HEARTBEAT_PORT = 9050
-  private val ports = Seq(
-    STARROCKS_FE_MYSQL_PORT,
-    STARROCKS_FE_HTTP_PORT,
-    STARROCKS_BE_THRIFT_PORT,
-    STARROCKS_BE_HTTP_PORT,
-    STARROCKS_BE_HEARTBEAT_PORT)
+  private val CATALOGD_SERVICE_NAME = "catalogd"
+  private val CATALOGD_PORT = 25020
 
-  override val containerDef: GenericContainer.Def[GenericContainer] = GenericContainer.Def(
-    dockerImage = starrocksDockerImage,
-    exposedPorts = ports,
-    waitStrategy = new WaitAllStrategy().withStartupTimeout(Duration.ofMinutes(10))
-      .withStrategy(Wait.forListeningPorts(ports: _*))
-      .withStrategy(forLogMessage(".*broker service already added into FE service.*", 1))
-      .withStrategy(
-        forLogMessage(".*Enjoy the journal to StarRocks blazing-fast lake-house engine.*", 1)))
+  private val IMPALAD_SERVICE_NAME = "impalad"
+  private val IMPALAD_PORT = 21050
 
-  protected def feJdbcUrl: String = withContainers { container =>
-    val queryServerHost: String = container.host
-    val queryServerPort: Int = container.mappedPort(STARROCKS_FE_MYSQL_PORT)
-    s"jdbc:mysql://$queryServerHost:$queryServerPort"
+  override val containerDef: DockerComposeContainer.Def =
+    DockerComposeContainer
+      .Def(
+        composeFiles = new File(Utils.getContextOrKyuubiClassLoader
+          .getResource("impala-compose.yml").toURI),
+        exposedServices = Seq[ExposedService](
+          ExposedService(
+            METASTORE_SERVICE_NAME,
+            METASTORE_PORT,
+            waitStrategy =
+              new DockerHealthcheckWaitStrategy()
+                .withStartupTimeout(Duration.ofMinutes(5))),
+          ExposedService(
+            STATESTORE_SERVICE_NAME,
+            STATESTORE_PORT,
+            waitStrategy =
+              new DockerHealthcheckWaitStrategy()
+                .withStartupTimeout(Duration.ofMinutes(5))),
+          ExposedService(
+            CATALOGD_SERVICE_NAME,
+            CATALOGD_PORT,
+            waitStrategy =
+              new DockerHealthcheckWaitStrategy()
+                .withStartupTimeout(Duration.ofMinutes(5))),
+          ExposedService(
+            IMPALAD_SERVICE_NAME,
+            IMPALAD_PORT,
+            waitStrategy =
+              new DockerHealthcheckWaitStrategy()
+                .withStartupTimeout(Duration.ofMinutes(5)))))
+
+  protected def hiveServerJdbcUrl: String = withContainers { container =>
+    val feHost: String = container.getServiceHost(IMPALAD_SERVICE_NAME, IMPALAD_PORT)
+    val fePort: Int = container.getServicePort(IMPALAD_SERVICE_NAME, IMPALAD_PORT)
+    s"jdbc:hive2://$feHost:$fePort"
   }
 }

@@ -16,20 +16,24 @@
  */
 package org.apache.kyuubi.engine.jdbc.impala
 
-import org.apache.kyuubi.config.KyuubiConf._
-import org.apache.kyuubi.engine.jdbc.WithJdbcEngine
+import org.apache.kyuubi.operation.HiveJDBCTestHelper
 
-trait WithImpalaEngine extends WithJdbcEngine with WithImpalaContainer {
+class SessionSuite extends WithImpalaEngine with HiveJDBCTestHelper {
 
-  private val user = "root"
-  private val password = ""
+  test("test session") {
+    withJdbcStatement() { statement =>
+      val resultSet = statement.executeQuery(
+        "select '1' as id")
+      val metadata = resultSet.getMetaData
+      for (i <- 1 to metadata.getColumnCount) {
+        assert(metadata.getColumnName(i) == "id")
+      }
+      while (resultSet.next()) {
+        val id = resultSet.getObject(1)
+        assert(id == "1")
+      }
+    }
+  }
 
-  override def withKyuubiConf: Map[String, String] = Map(
-    ENGINE_SHARE_LEVEL.key -> "SERVER",
-    ENGINE_JDBC_CONNECTION_URL.key -> hiveServerJdbcUrl,
-    ENGINE_JDBC_CONNECTION_USER.key -> user,
-    ENGINE_JDBC_CONNECTION_PASSWORD.key -> password,
-    ENGINE_TYPE.key -> "jdbc",
-    ENGINE_JDBC_SHORT_NAME.key -> "impala",
-    ENGINE_JDBC_DRIVER_CLASS.key -> ImpalaConnectionProvider.driverClass)
+  override protected def jdbcUrl: String = jdbcConnectionUrl
 }

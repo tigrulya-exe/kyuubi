@@ -15,14 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# This defines a basic Impala service with a single Impala Daemon and the minimal set of
-# services required to support it. A Hive MetaStore service is used to manage metadata.
-# All filesystem data is stored in Docker volumes. The default storage location for tables
-# is in the impala-quickstart-warehouse volume, i.e. if you create a table in Impala, it
-# will be stored in that volume by default.
-#
-# See README.md in this directory for usage instructions.
-version: "3"
+version: "3.5"
 services:
   hms:
     image: apache/impala:4.0.0-impala_quickstart_hms
@@ -30,22 +23,23 @@ services:
     # hostnames including underscore, which is rejected by Java's URL parser.
     container_name: quickstart-hive-metastore
     command: ["hms"]
+    ports:
+      - "9083"
     volumes:
-#      # Volume used to store Apache Derby database.
-#      - impala-quickstart-warehouse:/var/lib/hive
+      #      # Volume used to store Apache Derby database.
+      - impala-quickstart-warehouse:/var/lib/hive
       # Warehouse directory. HMS does file operations so needs access to the
       # shared volume.
       - impala-quickstart-warehouse:/user/hive/warehouse
-      - ./quickstart_conf:/opt/hive/conf:ro
+      - ./impala_conf:/opt/hive/conf:ro
 
   statestored:
     image: apache/impala:4.0.0-statestored
     ports:
-      # Web debug UI
-      - "25010:25010"
+      - "25010"
     command: ["-redirect_stdout_stderr=false", "-logtostderr", "-v=1"]
     volumes:
-      - ./quickstart_conf:/opt/impala/conf:ro
+      - ./impala_conf:/opt/impala/conf:ro
 
   catalogd:
     depends_on:
@@ -53,30 +47,22 @@ services:
       - hms
     image: apache/impala:4.0.0-catalogd
     ports:
-      # Web debug UI
-      - "25020:25020"
+      - "25020"
     command: ["-redirect_stdout_stderr=false", "-logtostderr", "-v=1",
               "-hms_event_polling_interval_s=1", "-invalidate_tables_timeout_s=999999"]
     volumes:
       # Warehouse directory. Catalog does file operations so needs access to the
       # shared volume.
       - impala-quickstart-warehouse:/user/hive/warehouse
-      - ./quickstart_conf:/opt/impala/conf:ro
+      - ./impala_conf:/opt/impala/conf:ro
 
-  impalad-1:
+  impalad:
     image: apache/impala:4.0.0-impalad_coord_exec
     depends_on:
       - statestored
       - catalogd
     ports:
-      # Beeswax endpoint (deprecated)
-      - "21000:21000"
-      # HS2 endpoint
-      - "21050:21050"
-      # Web debug UI
-      - "25000:25000"
-      # HS2 over HTTP endpoint.
-      - "28000:28000"
+      - "21050"
     command: [ "-v=1",
                "-redirect_stdout_stderr=false", "-logtostderr",
                "-kudu_master_hosts=kudu-master-1:7051",
@@ -88,8 +74,12 @@ services:
       - JAVA_TOOL_OPTIONS="-Xmx1g"
     volumes:
       - impala-quickstart-warehouse:/user/hive/warehouse
-      - ./quickstart_conf:/opt/impala/conf:ro
+      - ./impala_conf:/opt/impala/conf:ro
 
 volumes:
   impala-quickstart-hms:
   impala-quickstart-warehouse:
+
+networks:
+  default:
+    name: default-kyuubi-impala-test
