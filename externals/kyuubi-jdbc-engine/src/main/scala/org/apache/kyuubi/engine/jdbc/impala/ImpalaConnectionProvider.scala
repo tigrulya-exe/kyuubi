@@ -22,9 +22,9 @@ class ImpalaConnectionProvider extends JdbcConnectionProvider {
 
   override val name: String = classOf[ImpalaConnectionProvider].getName
 
-  override val driverClass: String = "com.mysql.cj.jdbc.Driver"
+  override val driverClass: String = ImpalaConnectionProvider.driverClass
+}
 
-  override def canHandle(providerClass: String): Boolean = {
-    driverClass.equalsIgnoreCase(providerClass)
-  }
+object ImpalaConnectionProvider {
+  val driverClass: String = "org.apache.hadoop.hive.jdbc.HiveDriver"
 }

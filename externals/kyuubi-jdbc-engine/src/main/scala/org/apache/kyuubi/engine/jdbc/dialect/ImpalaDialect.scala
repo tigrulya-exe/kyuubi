@@ -16,7 +16,7 @@
  */
 package org.apache.kyuubi.engine.jdbc.dialect
 
-import org.apache.kyuubi.KyuubiSQLException
+import org.apache.commons.lang3.StringUtils
 import org.apache.kyuubi.engine.jdbc.impala.{ImpalaSchemaHelper, ImpalaTRowSetGenerator}
 import org.apache.kyuubi.engine.jdbc.schema.{JdbcTRowSetGenerator, SchemaHelper}
 import org.apache.kyuubi.session.Session
@@ -30,49 +30,18 @@ class ImpalaDialect extends JdbcDialect {
     schema: String,
     tableName: String,
     tableTypes: util.List[String]): String = {
+    val query = new StringBuilder("show tables ")
 
-    //    val tTypes =
-    //      if (tableTypes == null || tableTypes.isEmpty) {
-    //        Set("BASE TABLE", "SYSTEM VIEW", "VIEW")
-    //      } else {
-    //        tableTypes.asScala.toSet
-    //      }
-    //    val query = new StringBuilder(
-    //      s"""
-    //         |SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, ENGINE,
-    //         |TABLE_ROWS, AVG_ROW_LENGTH, DATA_LENGTH,
-    //         |CREATE_TIME, UPDATE_TIME, TABLE_COLLATION, TABLE_COMMENT
-    //         |FROM INFORMATION_SCHEMA.TABLES
-    //         |""".stripMargin)
-    //
-    //    val filters = ArrayBuffer[String]()
-    //    if (StringUtils.isNotBlank(catalog)) {
-    //      filters += s"$TABLE_CATALOG = '$catalog'"
-    //    }
-    //
-    //    if (StringUtils.isNotBlank(schema)) {
-    //      filters += s"$TABLE_SCHEMA LIKE '$schema'"
-    //    }
-    //
-    //    if (StringUtils.isNotBlank(tableName)) {
-    //      filters += s"$TABLE_NAME LIKE '$tableName'"
-    //    }
-    //
-    //    if (tTypes.nonEmpty) {
-    //      filters += s"(${
-    //        tTypes.map { tableType => s"$TABLE_TYPE = '$tableType'" }
-    //          .mkString(" OR ")
-    //      })"
-    //    }
-    //
-    //    if (filters.nonEmpty) {
-    //      query.append(" WHERE ")
-    //      query.append(filters.mkString(" AND "))
-    //    }
-    //
-    //    query.toString()
+    if (StringUtils.isNotEmpty(schema)) {
+      query.append(s"in $schema ")
+    }
 
-    throw KyuubiSQLException.featureNotSupported()
+    if (StringUtils.isNotEmpty(tableName)) {
+      query.append(s"like '$tableName''")
+    }
+
+    // todo handle tableTypes
+    query.toString()
   }
 
   override def getColumnsQuery(
@@ -81,15 +50,14 @@ class ImpalaDialect extends JdbcDialect {
     schemaName: String,
     tableName: String,
     columnName: String): String = {
-    //    val query = new StringBuilder("show column stats ")
-    //
-    //    if (StringUtils.isNotEmpty(schemaName)) {
-    //      query.append(s"$schemaName.")
-    //    }
+    val query = new StringBuilder("show column stats ")
 
-    throw KyuubiSQLException.featureNotSupported()
-    // get column of table?
-    //    ???
+    if (StringUtils.isNotEmpty(schemaName)) {
+      query.append(s"$schemaName.")
+    }
+
+    query.append(tableName)
+    query.toString()
   }
 
   override def getTRowSetGenerator(): JdbcTRowSetGenerator = new ImpalaTRowSetGenerator

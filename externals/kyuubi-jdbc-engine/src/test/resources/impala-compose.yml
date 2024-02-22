@@ -31,24 +31,22 @@ services:
     container_name: quickstart-hive-metastore
     command: ["hms"]
     volumes:
-      # Volume used to store Apache Derby database.
-      - impala-quickstart-warehouse:/var/lib/hive
+#      # Volume used to store Apache Derby database.
+#      - impala-quickstart-warehouse:/var/lib/hive
       # Warehouse directory. HMS does file operations so needs access to the
       # shared volume.
       - impala-quickstart-warehouse:/user/hive/warehouse
       - ./quickstart_conf:/opt/hive/conf:ro
-    networks:
-      - quickstart-network
+
   statestored:
     image: apache/impala:4.0.0-statestored
     ports:
       # Web debug UI
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:25010:25010"
+      - "25010:25010"
     command: ["-redirect_stdout_stderr=false", "-logtostderr", "-v=1"]
     volumes:
       - ./quickstart_conf:/opt/impala/conf:ro
-    networks:
-      - quickstart-network
+
   catalogd:
     depends_on:
       - statestored
@@ -56,7 +54,7 @@ services:
     image: apache/impala:4.0.0-catalogd
     ports:
       # Web debug UI
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:25020:25020"
+      - "25020:25020"
     command: ["-redirect_stdout_stderr=false", "-logtostderr", "-v=1",
               "-hms_event_polling_interval_s=1", "-invalidate_tables_timeout_s=999999"]
     volumes:
@@ -64,8 +62,7 @@ services:
       # shared volume.
       - impala-quickstart-warehouse:/user/hive/warehouse
       - ./quickstart_conf:/opt/impala/conf:ro
-    networks:
-      - quickstart-network
+
   impalad-1:
     image: apache/impala:4.0.0-impalad_coord_exec
     depends_on:
@@ -73,13 +70,13 @@ services:
       - catalogd
     ports:
       # Beeswax endpoint (deprecated)
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:21000:21000"
+      - "21000:21000"
       # HS2 endpoint
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:21050:21050"
+      - "21050:21050"
       # Web debug UI
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:25000:25000"
+      - "25000:25000"
       # HS2 over HTTP endpoint.
-      - "${QUICKSTART_LISTEN_ADDR:?Please set QUICKSTART_LISTEN_ADDR environment variable}:28000:28000"
+      - "28000:28000"
     command: [ "-v=1",
                "-redirect_stdout_stderr=false", "-logtostderr",
                "-kudu_master_hosts=kudu-master-1:7051",
@@ -92,12 +89,7 @@ services:
     volumes:
       - impala-quickstart-warehouse:/user/hive/warehouse
       - ./quickstart_conf:/opt/impala/conf:ro
-    networks:
-      - quickstart-network
+
 volumes:
   impala-quickstart-hms:
   impala-quickstart-warehouse:
-
-networks:
-  quickstart-network:
-    external: true
