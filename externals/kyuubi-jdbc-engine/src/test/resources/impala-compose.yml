@@ -17,11 +17,10 @@
 
 version: "3.5"
 services:
-  hms:
+  metastore:
     image: apache/impala:4.0.0-impala_quickstart_hms
     # Give the HMS an explicit hostname to avoid issues with docker-compose-generated
     # hostnames including underscore, which is rejected by Java's URL parser.
-    container_name: quickstart-hive-metastore
     command: ["hms"]
     ports:
       - "9083"
@@ -44,7 +43,7 @@ services:
   catalogd:
     depends_on:
       - statestored
-      - hms
+      - metastore
     image: apache/impala:4.0.0-catalogd
     ports:
       - "25020"
@@ -62,7 +61,7 @@ services:
       - statestored
       - catalogd
     ports:
-      - "21050"
+      - "21050:21050"
     command: [ "-v=1",
                "-redirect_stdout_stderr=false", "-logtostderr",
                "-kudu_master_hosts=kudu-master-1:7051",

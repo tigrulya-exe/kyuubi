@@ -26,5 +26,6 @@ class ImpalaConnectionProvider extends JdbcConnectionProvider {
 }
 
 object ImpalaConnectionProvider {
-  val driverClass: String = "org.apache.hadoop.hive.jdbc.HiveDriver"
+  val driverClass: String = "org.apache.kyuubi.jdbc.KyuubiHiveDriver"
+//   val driverClass: String = "org.apache.hive.jdbc.HiveDriver"
 }

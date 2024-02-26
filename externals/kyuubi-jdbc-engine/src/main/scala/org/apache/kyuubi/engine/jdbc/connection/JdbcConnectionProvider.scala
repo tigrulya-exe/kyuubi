@@ -18,7 +18,6 @@ package org.apache.kyuubi.engine.jdbc.connection
 
 import java.sql.{Connection, DriverManager}
 import java.util.Properties
-
 import org.apache.kyuubi.Logging
 import org.apache.kyuubi.config.KyuubiConf
 import org.apache.kyuubi.config.KyuubiConf._
@@ -52,7 +51,18 @@ abstract class JdbcConnectionProvider extends SupportServiceLoader with Logging 
     }
     info(s"Starting to get connection to $url")
     val connection = DriverManager.getConnection(url, properties)
+//    val connection = buildDriver(kyuubiConf).connect(url, properties)
     info(s"Got the connection to $url")
     connection
   }
+
+//  private def buildDriver(kyuubiConf: KyuubiConf): Driver = {
+//    val driverClass = Option(
+//      DynClasses.builder().impl(kyuubiConf.get(ENGINE_JDBC_DRIVER_CLASS).get)
+//        .orNull().build[Driver]()).getOrElse {
+//      val url = kyuubiConf.get(ENGINE_JDBC_CONNECTION_URL).get
+//      DriverManager.getDriver(url).getClass
+//    }
+//    driverClass.getDeclaredConstructor().newInstance()
+//  }
 }
