@@ -24,11 +24,11 @@ class StatementSuite extends WithImpalaEngine with HiveJDBCTestHelper {
 
   test("impala - test select") {
     withJdbcStatement("test1") { statement =>
-      statement.execute("create table public.test1(id bigint primary key, " +
-        "name varchar(255), age integer)")
+      statement.execute("create table test1(id bigint, " +
+        "name string, age integer)")
       statement.execute("insert into test1 values(1, 'a', 11)")
 
-      val resultSet1 = statement.executeQuery("select * from public.test1")
+      val resultSet1 = statement.executeQuery("select * from test1")
       while (resultSet1.next()) {
         val id = resultSet1.getObject(1)
         assert(id == 1)
@@ -40,7 +40,7 @@ class StatementSuite extends WithImpalaEngine with HiveJDBCTestHelper {
     }
   }
 
-  test("postgreSQL - test types") {
+  test("impala - test types") {
     withJdbcStatement("type_test") { statement =>
       statement.execute("create table type_test(" +
         "id bigint, " +
@@ -50,11 +50,11 @@ class StatementSuite extends WithImpalaEngine with HiveJDBCTestHelper {
         "date_col date, " +
         "timestamp_col timestamp, " +
         "char_col char(10), " +
-        "string_col varchar(255), " +
+        "varchar_col varchar(255), " +
         "boolean_col boolean, " +
         "double_col double, " +
-        "float_col float, " +
-        "string_col STRING, " +
+        "real_col real, " +
+        "string_col STRING " +
         ")")
 
       statement.execute("insert into type_test" +
@@ -68,7 +68,8 @@ class StatementSuite extends WithImpalaEngine with HiveJDBCTestHelper {
         "varchar_col, " +
         "boolean_col, " +
         "double_col, " +
-        "float_col) " +
+        "real_col," +
+        "string_col) " +
         "VALUES (1, " +
         "2, " +
         "3, " +
@@ -80,7 +81,7 @@ class StatementSuite extends WithImpalaEngine with HiveJDBCTestHelper {
         "true, " +
         "8.8, " +
         "9.9, " +
-        "'test_str', " +
+        "'test_str' " +
         ")")
 
       val resultSet1 = statement.executeQuery("select * from type_test")

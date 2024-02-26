@@ -17,6 +17,18 @@
 package org.apache.kyuubi.engine.jdbc.impala
 
 import org.apache.kyuubi.engine.jdbc.schema.DefaultJdbcTRowSetGenerator
+import org.apache.kyuubi.shaded.hive.service.rpc.thrift.{TColumn, TColumnValue}
 
 class ImpalaTRowSetGenerator extends DefaultJdbcTRowSetGenerator {
+  override def toFloatTColumn(rows: Seq[Seq[_]], ordinal: Int): TColumn =
+    asDoubleTColumn(rows, ordinal)
+
+  override def toFloatTColumnValue(row: Seq[_], ordinal: Int): TColumnValue =
+    asDoubleTColumnValue(row, ordinal)
+
+  override def toRealTColumn(rows: Seq[Seq[_]], ordinal: Int): TColumn =
+    asDoubleTColumn(rows, ordinal)
+
+  override def toRealTColumnValue(row: Seq[_], ordinal: Int): TColumnValue =
+    asDoubleTColumnValue(row, ordinal)
 }

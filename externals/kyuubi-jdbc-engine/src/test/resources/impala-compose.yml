@@ -19,17 +19,15 @@ version: "3.5"
 services:
   metastore:
     image: apache/impala:4.0.0-impala_quickstart_hms
-    # Give the HMS an explicit hostname to avoid issues with docker-compose-generated
-    # hostnames including underscore, which is rejected by Java's URL parser.
     command: ["hms"]
     ports:
       - "9083"
     volumes:
-      #      # Volume used to store Apache Derby database.
-      - impala-quickstart-warehouse:/var/lib/hive
+      # Volume used to store Apache Derby database.
+      - impala-data:/var/lib/hive
       # Warehouse directory. HMS does file operations so needs access to the
       # shared volume.
-      - impala-quickstart-warehouse:/user/hive/warehouse
+      - impala-data:/user/hive/warehouse
       - ./impala_conf:/opt/hive/conf:ro
 
   statestored:
@@ -52,7 +50,7 @@ services:
     volumes:
       # Warehouse directory. Catalog does file operations so needs access to the
       # shared volume.
-      - impala-quickstart-warehouse:/user/hive/warehouse
+      - impala-data:/user/hive/warehouse
       - ./impala_conf:/opt/impala/conf:ro
 
   impalad:
@@ -72,12 +70,11 @@ services:
       # Keep the Java heap small to preserve memory for query execution.
       - JAVA_TOOL_OPTIONS="-Xmx1g"
     volumes:
-      - impala-quickstart-warehouse:/user/hive/warehouse
+      - impala-data:/user/hive/warehouse
       - ./impala_conf:/opt/impala/conf:ro
 
 volumes:
-  impala-quickstart-hms:
-  impala-quickstart-warehouse:
+  impala-data:
 
 networks:
   default:

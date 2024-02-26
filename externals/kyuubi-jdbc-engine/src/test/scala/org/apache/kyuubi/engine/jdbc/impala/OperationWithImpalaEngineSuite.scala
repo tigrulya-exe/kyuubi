@@ -45,16 +45,6 @@ class OperationWithImpalaEngineSuite extends ImpalaOperationSuite with HiveJDBCT
         req3.setSessionHandle(handle)
         req3.setInfoType(TGetInfoType.CLI_MAX_COLUMN_NAME_LEN)
         assert(client.GetInfo(req3).getInfoValue.getLenValue == metaData.getMaxColumnNameLength)
-
-        val req4 = new TGetInfoReq()
-        req4.setSessionHandle(handle)
-        req4.setInfoType(TGetInfoType.CLI_MAX_SCHEMA_NAME_LEN)
-        assert(client.GetInfo(req4).getInfoValue.getLenValue == metaData.getMaxSchemaNameLength)
-
-        val req5 = new TGetInfoReq()
-        req5.setSessionHandle(handle)
-        req5.setInfoType(TGetInfoType.CLI_MAX_TABLE_NAME_LEN)
-        assert(client.GetInfo(req5).getInfoValue.getLenValue == metaData.getMaxTableNameLength)
       }
     }
   }

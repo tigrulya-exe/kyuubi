@@ -544,6 +544,14 @@ public class KyuubiStatement implements SQLStatement, KyuubiLoggable {
   }
 
   @Override
+  public boolean getMoreResults(int current) throws SQLException {
+    if (current == Statement.CLOSE_CURRENT_RESULT) {
+      return false;
+    }
+    return SQLStatement.super.getMoreResults(current);
+  }
+
+  @Override
   public boolean getMoreResults() throws SQLException {
     return false;
   }

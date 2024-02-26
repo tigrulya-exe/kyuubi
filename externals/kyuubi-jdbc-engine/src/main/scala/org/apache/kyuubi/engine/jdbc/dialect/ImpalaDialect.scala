@@ -32,12 +32,12 @@ class ImpalaDialect extends JdbcDialect {
     tableTypes: util.List[String]): String = {
     val query = new StringBuilder("show tables ")
 
-    if (StringUtils.isNotEmpty(schema)) {
-      query.append(s"in $schema ")
+    if (StringUtils.isNotEmpty(schema) && !isWildcard(schema)) {
+      query.append(s"in ${toImpalaRegex(schema)} ")
     }
 
     if (StringUtils.isNotEmpty(tableName)) {
-      query.append(s"like '$tableName''")
+      query.append(s"like '${toImpalaRegex(tableName)}'")
     }
 
     // todo handle tableTypes
@@ -52,7 +52,7 @@ class ImpalaDialect extends JdbcDialect {
     columnName: String): String = {
     val query = new StringBuilder("show column stats ")
 
-    if (StringUtils.isNotEmpty(schemaName)) {
+    if (StringUtils.isNotEmpty(schemaName) && !isWildcard(schemaName)) {
       query.append(s"$schemaName.")
     }
 
@@ -65,4 +65,12 @@ class ImpalaDialect extends JdbcDialect {
   override def getSchemaHelper(): SchemaHelper = new ImpalaSchemaHelper
 
   override def name(): String = "impala"
+
+  private def isWildcard(pattern: String): Boolean = {
+    pattern == "%" || pattern == "*"
+  }
+
+  private def toImpalaRegex(pattern: String): String = {
+    pattern.replace("%", "*")
+  }
 }

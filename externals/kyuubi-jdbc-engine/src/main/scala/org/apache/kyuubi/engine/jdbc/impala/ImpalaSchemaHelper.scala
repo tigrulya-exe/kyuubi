@@ -17,5 +17,14 @@
 package org.apache.kyuubi.engine.jdbc.impala
 
 import org.apache.kyuubi.engine.jdbc.schema.SchemaHelper
+import org.apache.kyuubi.shaded.hive.service.rpc.thrift.TTypeId
 
-class ImpalaSchemaHelper extends SchemaHelper {}
+class ImpalaSchemaHelper extends SchemaHelper {
+  override protected def floatToTTypeId: TTypeId = {
+    TTypeId.DOUBLE_TYPE
+  }
+
+  override protected def realToTTypeId: TTypeId = {
+    TTypeId.DOUBLE_TYPE
+  }
+}
