@@ -22,18 +22,17 @@ import scala.collection.mutable.ArrayBuffer
 
 import org.apache.kyuubi.operation.HiveJDBCTestHelper
 
-// add tests for schema
 abstract class ImpalaOperationSuite extends WithImpalaEngine with HiveJDBCTestHelper {
   test("impala - get tables") {
-    case class Table(catalog: String, schema: String, tableName: String)
-
     withJdbcStatement() { statement =>
       val meta = statement.getConnection.getMetaData
 
       statement.execute("create table test1(id bigint)")
       statement.execute("create table test2(id bigint)")
+      statement.execute("create database db1")
+      statement.execute("create table db1.test3(id bigint)")
 
-      var tables = meta.getTables(null, null, "test1", Array("u"))
+      var tables = meta.getTables(null, null, "test1", null)
       while (tables.next()) {
         assert(tables.getString(1) == "test1")
       }
@@ -43,8 +42,23 @@ abstract class ImpalaOperationSuite extends WithImpalaEngine with HiveJDBCTestHe
         assert(tables.getString(1) == "test2")
       }
 
+      tables = meta.getTables(null, null, "test*", null)
+
+      val actualTables = ArrayBuffer[String]()
+      while (tables.next()) {
+        actualTables += tables.getString(1)
+      }
+      assert(ArrayBuffer("test1", "test2") == actualTables)
+
+      tables = meta.getTables(null, "db1", "test*", null)
+      while (tables.next()) {
+        assert(tables.getString(1) == "test3")
+      }
+
       statement.execute("drop table test1")
       statement.execute("drop table test2")
+      statement.execute("drop table db1.test3")
+      statement.execute("drop database db1")
     }
   }
 
@@ -62,8 +76,9 @@ abstract class ImpalaOperationSuite extends WithImpalaEngine with HiveJDBCTestHe
       statement.execute("create table if not exists test1" +
         "(id bigint, str1 string, str2 string, age int)")
 
-      statement.execute("create table if not exists test2" +
-        "(id bigint, str1 string, str2 string, age int)")
+      statement.execute("create database db1")
+      statement.execute("create table if not exists db1.test2" +
+        "(id bigint, str1 string)")
 
       val resultBuffer = ArrayBuffer[Column]()
       val resultSet1 = metadata.getColumns(null, null, "test1", null)
@@ -78,8 +93,16 @@ abstract class ImpalaOperationSuite extends WithImpalaEngine with HiveJDBCTestHe
 
       resultBuffer.clear()
 
+      val resultSet2 = metadata.getColumns(null, "db1", "test1", null)
+      while (resultSet2.next()) {
+        resultBuffer += buildColumn(resultSet2)
+      }
+      assert(resultBuffer.contains(Column("id", "BIGINT")))
+      assert(resultBuffer.contains(Column("str1", "STRING")))
+
       statement.execute("drop table test1")
-      statement.execute("drop table test2")
+      statement.execute("drop table db1.test2")
+      statement.execute("drop database db1")
     }
   }
 }

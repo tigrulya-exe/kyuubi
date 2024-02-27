@@ -14,19 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.kyuubi.engine.jdbc.impala
 
-import org.apache.kyuubi.engine.jdbc.connection.JdbcConnectionProvider
+package org.apache.kyuubi.it.jdbc.impala
 
-class ImpalaConnectionProvider extends JdbcConnectionProvider {
+import org.apache.kyuubi.engine.jdbc.impala.ImpalaOperationSuite
 
-  override val name: String = classOf[ImpalaConnectionProvider].getName
+class OperationWithServerSuite extends ImpalaOperationSuite
+  with WithKyuubiServerAndImpalaContainer {
 
-  override val driverClass: String = ImpalaConnectionProvider.driverClass
-}
+  override protected def jdbcUrl: String = getJdbcUrl
 
-object ImpalaConnectionProvider {
-  // we should use kyuubi hive driver instead of original hive one in order
-  // to get fixed getMoreResults()
-  val driverClass: String = "org.apache.kyuubi.jdbc.KyuubiHiveDriver"
 }

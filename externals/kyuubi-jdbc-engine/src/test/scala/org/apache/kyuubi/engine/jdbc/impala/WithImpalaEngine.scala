@@ -21,14 +21,9 @@ import org.apache.kyuubi.engine.jdbc.WithJdbcEngine
 
 trait WithImpalaEngine extends WithJdbcEngine with WithImpalaContainer {
 
-  private val user = "root"
-  private val password = ""
-
   override def withKyuubiConf: Map[String, String] = Map(
     ENGINE_SHARE_LEVEL.key -> "SERVER",
     ENGINE_JDBC_CONNECTION_URL.key -> hiveServerJdbcUrl,
-    ENGINE_JDBC_CONNECTION_USER.key -> user,
-    ENGINE_JDBC_CONNECTION_PASSWORD.key -> password,
     ENGINE_TYPE.key -> "jdbc",
     ENGINE_JDBC_SHORT_NAME.key -> "impala",
     ENGINE_JDBC_DRIVER_CLASS.key -> ImpalaConnectionProvider.driverClass)

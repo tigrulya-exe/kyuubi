@@ -17,6 +17,7 @@
 package org.apache.kyuubi.engine.jdbc.dialect
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.kyuubi.KyuubiSQLException
 import org.apache.kyuubi.engine.jdbc.impala.{ImpalaSchemaHelper, ImpalaTRowSetGenerator}
 import org.apache.kyuubi.engine.jdbc.schema.{JdbcTRowSetGenerator, SchemaHelper}
 import org.apache.kyuubi.session.Session
@@ -30,10 +31,14 @@ class ImpalaDialect extends JdbcDialect {
     schema: String,
     tableName: String,
     tableTypes: util.List[String]): String = {
+    if (isPattern(schema)) {
+      throw KyuubiSQLException.featureNotSupported("Pattern-like schema names not supported")
+    }
+
     val query = new StringBuilder("show tables ")
 
-    if (StringUtils.isNotEmpty(schema) && !isWildcard(schema)) {
-      query.append(s"in ${toImpalaRegex(schema)} ")
+    if (StringUtils.isNotEmpty(schema) && !isWildcardSetByKyuubi(schema)) {
+      query.append(s"in $schema ")
     }
 
     if (StringUtils.isNotEmpty(tableName)) {
@@ -50,9 +55,17 @@ class ImpalaDialect extends JdbcDialect {
     schemaName: String,
     tableName: String,
     columnName: String): String = {
+    if (isPattern(schemaName)) {
+      throw KyuubiSQLException.featureNotSupported("Pattern-like schema names not supported")
+    }
+
+    if (isPattern(tableName)) {
+      throw KyuubiSQLException.featureNotSupported("Pattern-like table names not supported")
+    }
+
     val query = new StringBuilder("show column stats ")
 
-    if (StringUtils.isNotEmpty(schemaName) && !isWildcard(schemaName)) {
+    if (StringUtils.isNotEmpty(schemaName) && !isWildcardSetByKyuubi(schemaName)) {
       query.append(s"$schemaName.")
     }
 
@@ -66,9 +79,11 @@ class ImpalaDialect extends JdbcDialect {
 
   override def name(): String = "impala"
 
-  private def isWildcard(pattern: String): Boolean = {
-    pattern == "%" || pattern == "*"
+  private def isPattern(value: String): Boolean = {
+    !isWildcardSetByKyuubi(value) && value.contains("*")
   }
+
+  private def isWildcardSetByKyuubi(pattern: String): Boolean = pattern == "%"
 
   private def toImpalaRegex(pattern: String): String = {
     pattern.replace("%", "*")
