@@ -62,9 +62,7 @@ class HiveProcessBuilder(
     val memory = conf.get(ENGINE_HIVE_MEMORY)
     buffer += s"-Xmx$memory"
     val javaOptions = conf.get(ENGINE_HIVE_JAVA_OPTIONS)
-    if (javaOptions.isDefined) {
-      buffer += javaOptions.get
-    }
+    javaOptions.map(_.trim.split("\\s+")).foreach(buffer ++= _)
     // -Xmx5g
     // java options
     val classpathEntries = new mutable.LinkedHashSet[String]
