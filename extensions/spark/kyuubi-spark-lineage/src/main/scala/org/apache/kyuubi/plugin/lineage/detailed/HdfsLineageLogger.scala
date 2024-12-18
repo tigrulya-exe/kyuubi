@@ -26,7 +26,7 @@ import org.apache.spark.sql.execution.QueryExecution
 
 import org.apache.kyuubi.Logging
 import org.apache.kyuubi.plugin.lineage.Lineage
-import org.apache.kyuubi.plugin.lineage.detailed.HdfsLineageLogger.{LINEAGE_FILE_NAME, PLAN_FILE_NAME}
+import org.apache.kyuubi.plugin.lineage.detailed.HdfsLineageLogger.{LINEAGE_FILE_NAME, PLAN_FILE_NAME, SQL_QUERY_HEADER}
 import org.apache.kyuubi.util.JdbcUtils
 
 class HdfsLineageLogger(
@@ -37,20 +37,30 @@ class HdfsLineageLogger(
   private val fileSystem: FileSystem = FileSystem.get(config)
 
   override def log(execution: QueryExecution, lineage: Lineage): Unit = {
-    val executionDir = new Path(rootDir, execution.id.toString)
+    val executionDir = getSessionDirectory(execution)
 
     if (!fileSystem.mkdirs(executionDir)) {
       throw new RuntimeException(s"Error creating directory $executionDir")
     }
 
-    logExecutionPlan(executionDir, execution)
+    logQueryMetadata(executionDir, execution)
     logLineage(executionDir, lineage)
   }
 
-  private def logExecutionPlan(executionDir: Path, execution: QueryExecution): Unit = {
-    val queryPlanPath = new Path(executionDir, PLAN_FILE_NAME)
-    withNewFile(queryPlanPath) {
-      IOUtils.write(execution.toString(), _, StandardCharsets.UTF_8)
+  private def logQueryMetadata(executionDir: Path, execution: QueryExecution): Unit = {
+    val path = new Path(executionDir, PLAN_FILE_NAME)
+
+    val queryMetadata = execution.logical.origin
+      .sqlText
+      .map { sqlQuery =>
+        s"""$SQL_QUERY_HEADER
+           |$sqlQuery
+           |
+           |$execution""".stripMargin
+      }.getOrElse(execution.toString())
+
+    withNewFile(path) {
+      IOUtils.write(queryMetadata, _, StandardCharsets.UTF_8)
     }
   }
 
@@ -66,9 +76,15 @@ class HdfsLineageLogger(
       action(_)
     }
   }
+
+  private def getSessionDirectory(execution: QueryExecution): Path = {
+    val sparkAppName = execution.sparkSession.conf.get("spark.app.name")
+    new Path(rootDir, new Path(sparkAppName, execution.id.toString))
+  }
 }
 
 object HdfsLineageLogger {
-  val PLAN_FILE_NAME = "execution_plan.txt"
+  val PLAN_FILE_NAME = "query_metadata.txt"
   val LINEAGE_FILE_NAME = "lineage"
+  val SQL_QUERY_HEADER = "== SQL Query =="
 }

@@ -62,6 +62,7 @@ class HdfsDetailedEventHandlerSuite extends KyuubiFunSuite
         "spark.sql.queryExecutionListeners",
         "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
       .set(DISPATCHERS.key, "KYUUBI_DETAILED_EVENT")
+      .set("spark.app.name", "kyuubi_app")
   }
 
   test("lineage event was captured") {
@@ -84,7 +85,7 @@ class HdfsDetailedEventHandlerSuite extends KyuubiFunSuite
           ("col1", Set(s"$DEFAULT_CATALOG.default.test_table0.b"))))
       assert(actualEvent._2 == expectedLineage)
 
-      val executionDir = s"/test/lineage/${actualEvent._1.id}/"
+      val executionDir = s"/test/lineage/kyuubi_app/${actualEvent._1.id}/"
       assert(hdfsClient.exists(new Path(executionDir, LINEAGE_FILE_NAME)))
       assert(hdfsClient.exists(new Path(executionDir, PLAN_FILE_NAME)))
     }
@@ -95,16 +96,22 @@ class HdfsDetailedEventHandlerSuite extends KyuubiFunSuite
 
     withTable("test_table0") { _ =>
       spark.sql("create table test_table0(a string, b string)")
-      spark.sql("select a as col0, b as col1 from test_table0").collect()
+      val sqlQuery = "select a as col0, b as col1 from test_table0"
+      spark.sql(sqlQuery).collect()
 
       eventHandler.expectedEventsLatch.await(20, TimeUnit.SECONDS)
       assert(eventHandler.handledEvents.size == 1)
 
       val lineageEvent = eventHandler.handledEvents(0)
-      val executionDir = s"/test/lineage/${lineageEvent._1.id}/"
+      val executionDir = s"/test/lineage/kyuubi_app/${lineageEvent._1.id}/"
 
       val actualPlan = readUtf8(executionDir, PLAN_FILE_NAME)
-      assert(lineageEvent._1.toString() == actualPlan)
+      val expectedPlan =
+        s"""${HdfsLineageLogger.SQL_QUERY_HEADER}
+           |$sqlQuery
+           |
+           |${lineageEvent._1}""".stripMargin
+      assert(expectedPlan == actualPlan)
 
       val expectedLineage =
         """{
