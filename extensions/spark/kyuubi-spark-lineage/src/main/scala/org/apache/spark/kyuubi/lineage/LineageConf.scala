@@ -36,6 +36,8 @@ object LineageConf {
       "`org.apache.kyuubi.plugin.lineage.LineageDispatcher` for dispatching lineage events.<ul>" +
       "<li>SPARK_EVENT: send lineage event to spark event bus</li>" +
       "<li>KYUUBI_EVENT: send lineage event to kyuubi event bus</li>" +
+      "<li>KYUUBI_DETAILED_EVENT: send detailed lineage event to kyuubi event bus</li>" +
+      "<li>OPEN_METADATA: send lineage to OpenMetadata</li>" +
       "<li>ATLAS: send lineage to apache atlas</li>" +
       "</ul>")
     .version("1.8.0")
@@ -48,4 +50,31 @@ object LineageConf {
 
   val DEFAULT_CATALOG: String = SQLConf.get.getConf(SQLConf.DEFAULT_CATALOG)
 
+  val OPEN_METADATA_SERVER_ADDRESS = ConfigBuilder(
+    "spark.kyuubi.plugin.lineage.openmetadata.server")
+    .doc("TODO")
+    .version("1.9.2")
+    .stringConf
+    .createOptional
+
+  val OPEN_METADATA_JWT_KEY = ConfigBuilder("spark.kyuubi.plugin.lineage.openmetadata.jwt")
+    .doc("TODO")
+    .version("1.9.2")
+    .stringConf
+    .createOptional
+
+  val OPEN_METADATA_PIPELINE_SERVICE_NAME_KEY = ConfigBuilder(
+    "spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName")
+    .doc("TODO")
+    .version("1.9.2")
+    .stringConf
+    .createWithDefault("SparkOnKyuubi")
+
+  val OPEN_METADATA_DATABASE_SERVICE_NAMES_KEY = ConfigBuilder(
+    "spark.kyuubi.plugin.lineage.openmetadata.databaseServiceNames")
+    .doc("TODO")
+    .version("1.9.2")
+    .stringConf
+    .toSequence
+    .createWithDefault(Seq())
 }

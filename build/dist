@@ -261,9 +261,9 @@ done
 
 # shellcheck disable=SC2050
 if [ "$SCALA_VERSION" = "2.12" ]; then
-  EXTRA_SPARK_ENGINE_BUILD_COMMAND=("$MVN" install $MVN_DIST_OPT ${FILTERED_ARGS[@]} -Pscala-2.13 -pl :kyuubi-spark-sql-engine_2.13 -am)
+  EXTRA_SPARK_ENGINE_BUILD_COMMAND=("$MVN" install $MVN_DIST_OPT ${FILTERED_ARGS[@]} -Pscala-2.13 -pl :kyuubi-spark-sql-engine_2.13 -am -Drat.skip=true)
 else
-  EXTRA_SPARK_ENGINE_BUILD_COMMAND=("$MVN" install $MVN_DIST_OPT ${FILTERED_ARGS[@]} -pl :kyuubi-spark-sql-engine_2.12 -am)
+  EXTRA_SPARK_ENGINE_BUILD_COMMAND=("$MVN" install $MVN_DIST_OPT ${FILTERED_ARGS[@]} -pl :kyuubi-spark-sql-engine_2.12 -am -Drat.skip=true)
 fi
 
 # shellcheck disable=SC2145
