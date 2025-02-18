@@ -19,10 +19,63 @@ package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
 
 import org.apache.kyuubi.plugin.lineage.Lineage
 import org.apache.kyuubi.plugin.lineage.detailed.LineageLogger
+import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.OpenMetadataEntity
 import org.apache.spark.sql.execution.QueryExecution
 
-class OpenMetadataLineageLogger extends LineageLogger {
-  override def log(execution: QueryExecution, lineage: Lineage): Unit = {
+class OpenMetadataLineageLogger(
+  val config: OpenMetadataConfig,
+  val openMetadataClient: OpenMetadataClient
+) extends LineageLogger {
 
+  private val pipelineServiceId = openMetadataClient
+    .createPipelineServiceIfNotExists(config.pipelineServiceName).id
+
+  override def log(execution: QueryExecution, lineage: Lineage): Unit = {
+    val inputTableEntities = lineage.inputTables.map(getTableEntity)
+    val outputTableEntities = lineage.outputTables.map(getTableEntity)
+
+    val pipeline = openMetadataClient.createPipelineIfNotExists(
+      pipelineServiceId, getPipelineName(execution))
+
+    for (fromTable <- inputTableEntities; toTable <- outputTableEntities) {
+      openMetadataClient.addLineage(pipeline, fromTable, toTable)
+    }
+  }
+
+  private def getTableEntity(tableName: String): OpenMetadataEntity = {
+    val maybeTableEntity = if (config.databaseServiceNames.isEmpty) {
+      searchTableEntityGlobally(tableName)
+    } else {
+      searchTableEntityInServices(tableName)
+    }
+
+    maybeTableEntity.getOrElse {
+      throw new IllegalArgumentException(s"OpenMetadata Entity for table $tableName not found")
+    }
+  }
+
+  private def searchTableEntityGlobally(tableName: String): Option[OpenMetadataEntity] = {
+    val searchPattern = getTableEntityPattern(tableName)
+    openMetadataClient.getTableEntity(searchPattern)
+  }
+
+  private def searchTableEntityInServices(tableName: String): Option[OpenMetadataEntity] = {
+    config.databaseServiceNames
+      .view
+      .map { dbService =>
+        val searchPattern = getTableEntityPattern(tableName, dbService)
+        openMetadataClient.getTableEntity(searchPattern)
+      }
+      .find(_.isDefined)
+      .flatten
+  }
+
+  private def getTableEntityPattern(tableName: String, prefixes: String*): String = {
+    val prefix = prefixes.mkString("", ".", ".")
+    s"$prefix*$tableName"
+  }
+
+  private def getPipelineName(execution: QueryExecution): String = {
+    execution.sparkSession.conf.get("spark.app.name")
   }
 }

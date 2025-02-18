@@ -17,10 +17,10 @@
 
 package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
 
-import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.OpenMetadataEntity
-import org.openmetadata.client.api.{LineageApi, SearchApi, TablesApi}
+import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
+import org.openmetadata.client.api._
 import org.openmetadata.client.gateway.OpenMetadata
-import org.openmetadata.client.model.{AddLineage, EntitiesEdge, EntityReference}
+import org.openmetadata.client.model._
 import org.openmetadata.schema.security.client.OpenMetadataJWTClientConfig
 import org.openmetadata.schema.services.connections.metadata.{AuthProvider, OpenMetadataConnection}
 
@@ -47,8 +47,11 @@ class RestOpenMetadataClient(
   }
 
   private val tablesApi: TablesApi = openMetadataGateway.buildClient(classOf[TablesApi])
-  private val searchApi: SearchApi = openMetadataGateway.buildClient(classOf[TablesApi])
+  private val searchApi: SearchApi = openMetadataGateway.buildClient(classOf[SearchApi])
   private val lineageApi: LineageApi = openMetadataGateway.buildClient(classOf[LineageApi])
+  private val pipelinesApi: PipelinesApi = openMetadataGateway.buildClient(classOf[PipelinesApi])
+  private val pipelineServiceApi: PipelineServicesApi =
+    openMetadataGateway.buildClient(classOf[PipelineServicesApi])
 
   override def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity] = {
     val searchResult = searchApi.searchEntitiesWithSpecificFieldAndValue(
@@ -73,15 +76,45 @@ class RestOpenMetadataClient(
     }
   }
 
-  override def addLineage(from: OpenMetadataEntity, to: OpenMetadataEntity): Unit = {
+  override def addLineage(
+    pipeline: OpenMetadataPipeline,
+    from: OpenMetadataEntity,
+    to: OpenMetadataEntity): Unit = {
+    val lineageDetails = new LineageDetails()
+      .pipeline(toEntityRef(pipeline))
+
+    val entitiesEdge = new EntitiesEdge()
+      .lineageDetails(lineageDetails)
+      .fromEntity(toEntityRef(from))
+      .toEntity(toEntityRef(to))
+
     val request = new AddLineage()
-    val entitiesEdge = new EntitiesEdge
+      .edge(entitiesEdge)
 
-    entitiesEdge.fromEntity(toEntityRef(from))
-    entitiesEdge.toEntity(toEntityRef(to))
-
-    request.setEdge(entitiesEdge)
     lineageApi.addLineageEdge(request)
+  }
+
+  override def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity = {
+    val createPipelineRequest = new CreatePipelineService()
+      .name(pipelineService)
+      .serviceType(CreatePipelineService.ServiceTypeEnum.SPARK)
+    val pipelineServiceEntity =
+      pipelineServiceApi.createOrUpdatePipelineService(createPipelineRequest)
+    OpenMetadataEntity(
+      pipelineServiceEntity.getId,
+      pipelineServiceEntity.getFullyQualifiedName,
+      pipelineServiceEntity.getServiceType.toString
+    )
+  }
+
+  override def createPipelineIfNotExists(
+    pipelineServiceId: UUID, pipeline: String): OpenMetadataPipeline = {
+    val createPipelineRequest = new CreatePipeline()
+      .service(pipelineServiceId.toString)
+      .name(pipeline)
+
+    val pipelineEntity = pipelinesApi.createPipeline(createPipelineRequest)
+    new OpenMetadataPipeline(pipelineEntity.getId)
   }
 
   private def toEntityRef(entity: OpenMetadataEntity): EntityReference = {

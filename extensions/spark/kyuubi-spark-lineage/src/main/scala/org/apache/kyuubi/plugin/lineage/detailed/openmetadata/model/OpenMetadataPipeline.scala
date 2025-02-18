@@ -15,23 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
-
-import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
+package org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model
 
 import java.util.UUID
 
-
-trait OpenMetadataClient {
-  def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity
-
-  def createPipelineIfNotExists(pipelineServiceId: UUID, pipeline: String): OpenMetadataPipeline
-
-  def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity]
-
-  def addLineage(
-    pipeline: OpenMetadataPipeline,
-    from: OpenMetadataEntity,
-    to: OpenMetadataEntity
-  ): Unit
-}
+class OpenMetadataPipeline(id: UUID) extends OpenMetadataEntity(id, id.toString, "pipeline")
