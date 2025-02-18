@@ -15,12 +15,8 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 import java.util.UUID
 
-case class OpenMetadataEntity(
-  id: UUID,
-  fullyQualifiedName: String,
-  entityType: String
-)
+class OpenMetadataPipeline(id: UUID) extends OpenMetadataEntity(id, id.toString, "pipeline")

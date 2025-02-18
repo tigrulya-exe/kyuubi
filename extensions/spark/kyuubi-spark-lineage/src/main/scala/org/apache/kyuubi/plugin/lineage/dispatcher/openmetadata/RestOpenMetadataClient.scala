@@ -15,38 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
+import java.util.UUID
+
 import org.openmetadata.client.api._
-import org.openmetadata.client.gateway.OpenMetadata
 import org.openmetadata.client.model._
 import org.openmetadata.schema.security.client.OpenMetadataJWTClientConfig
 import org.openmetadata.schema.services.connections.metadata.{AuthProvider, OpenMetadataConnection}
 
-import java.util.UUID
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
 
 class RestOpenMetadataClient(
   serverAddress: String,
   jwt: String = null
 ) extends OpenMetadataClient {
 
-  private val openMetadataGateway: OpenMetadata = {
+  private val openMetadataGateway: OpenMetadataGateway = {
     val connection = new OpenMetadataConnection()
-    connection.setHostPort(serverAddress)
-    connection.setApiVersion("v1")
+      .withHostPort(serverAddress)
+      .withApiVersion("v1")
 
     if (jwt != null) {
-      connection.setAuthProvider(AuthProvider.OPENMETADATA)
-      val securityConf = new OpenMetadataJWTClientConfig()
-      securityConf.setJwtToken(jwt)
-      connection.setSecurityConfig(securityConf)
+      connection.withAuthProvider(AuthProvider.OPENMETADATA)
+        .withSecurityConfig(new OpenMetadataJWTClientConfig().withJwtToken(jwt))
     }
 
-    new OpenMetadata(connection)
+    new OpenMetadataGateway(connection)
   }
 
-  private val tablesApi: TablesApi = openMetadataGateway.buildClient(classOf[TablesApi])
   private val searchApi: SearchApi = openMetadataGateway.buildClient(classOf[SearchApi])
   private val lineageApi: LineageApi = openMetadataGateway.buildClient(classOf[LineageApi])
   private val pipelinesApi: PipelinesApi = openMetadataGateway.buildClient(classOf[PipelinesApi])

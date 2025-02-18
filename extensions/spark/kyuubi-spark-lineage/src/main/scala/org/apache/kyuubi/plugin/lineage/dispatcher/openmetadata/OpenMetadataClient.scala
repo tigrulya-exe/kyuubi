@@ -15,12 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-class OpenMetadataConfig(
-  val serverAddress: String,
-  val jwtToken: String = null,
-  val pipelineServiceName: String = "KyuubiSpark",
-  val databaseServiceNames: Seq[String] = Seq(),
-  val connectionTimeoutMs: Long = 30000L
-)
+import java.util.UUID
+
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
+
+trait OpenMetadataClient {
+  def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity
+
+  def createPipelineIfNotExists(pipelineServiceId: UUID, pipeline: String): OpenMetadataPipeline
+
+  def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity]
+
+  def addLineage(
+    pipeline: OpenMetadataPipeline,
+    from: OpenMetadataEntity,
+    to: OpenMetadataEntity
+  ): Unit
+}

@@ -15,22 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.detailed.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-import org.apache.kyuubi.plugin.lineage.Lineage
-import org.apache.kyuubi.plugin.lineage.detailed.LineageLogger
-import org.apache.kyuubi.plugin.lineage.detailed.openmetadata.model.OpenMetadataEntity
 import org.apache.spark.sql.execution.QueryExecution
 
+import org.apache.kyuubi.plugin.lineage.Lineage
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
+
 class OpenMetadataLineageLogger(
-  val config: OpenMetadataConfig,
-  val openMetadataClient: OpenMetadataClient
-) extends LineageLogger {
-
+  val openMetadataClient: OpenMetadataClient,
+  val databaseServiceNames: Seq[String],
+  pipelineServiceName: String) {
   private val pipelineServiceId = openMetadataClient
-    .createPipelineServiceIfNotExists(config.pipelineServiceName).id
+    .createPipelineServiceIfNotExists(pipelineServiceName).id
 
-  override def log(execution: QueryExecution, lineage: Lineage): Unit = {
+  def log(execution: QueryExecution, lineage: Lineage): Unit = {
     val inputTableEntities = lineage.inputTables.map(getTableEntity)
     val outputTableEntities = lineage.outputTables.map(getTableEntity)
 
@@ -43,7 +42,7 @@ class OpenMetadataLineageLogger(
   }
 
   private def getTableEntity(tableName: String): OpenMetadataEntity = {
-    val maybeTableEntity = if (config.databaseServiceNames.isEmpty) {
+    val maybeTableEntity = if (databaseServiceNames.isEmpty) {
       searchTableEntityGlobally(tableName)
     } else {
       searchTableEntityInServices(tableName)
@@ -60,7 +59,7 @@ class OpenMetadataLineageLogger(
   }
 
   private def searchTableEntityInServices(tableName: String): Option[OpenMetadataEntity] = {
-    config.databaseServiceNames
+    databaseServiceNames
       .view
       .map { dbService =>
         val searchPattern = getTableEntityPattern(tableName, dbService)
