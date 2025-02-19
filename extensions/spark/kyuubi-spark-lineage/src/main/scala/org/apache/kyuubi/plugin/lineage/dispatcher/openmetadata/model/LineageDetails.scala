@@ -15,20 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
 
 case class LineageDetails(
   @JsonProperty("pipeline")
-  pipeline: OpenMetadataEntity,
+  pipeline: OpenMetadataEntityReference,
   @JsonProperty("description")
   description: String,
   @JsonProperty("sqlQuery")
   sqlQuery: String,
   @JsonProperty("columnsLineage")
-  columnsLineage: Seq[ColumnLineage]
+  columnsLineage: Seq[ColumnLineage],
+  @JsonProperty("source")
+  source: String = "SparkLineage"
 )
 
 case class ColumnLineage(

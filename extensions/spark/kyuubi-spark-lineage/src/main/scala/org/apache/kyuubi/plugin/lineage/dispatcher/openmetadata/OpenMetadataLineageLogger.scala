@@ -18,8 +18,7 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
 import org.apache.kyuubi.plugin.lineage.Lineage
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.LineageDetails
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{LineageDetails, OpenMetadataEntity}
 import org.apache.spark.sql.execution.QueryExecution
 
 class OpenMetadataLineageLogger(
@@ -30,22 +29,37 @@ class OpenMetadataLineageLogger(
     .createPipelineServiceIfNotExists(pipelineServiceName)
 
   def log(execution: QueryExecution, lineage: Lineage): Unit = {
-    val inputTableEntities = lineage.inputTables.map(getTableEntity)
-    val outputTableEntities = lineage.outputTables.map(getTableEntity)
+    val inputTableEntities = getTableNameToEntityMapping(lineage.inputTables)
+    val outputTableEntities = getTableNameToEntityMapping(lineage.outputTables)
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
       pipelineService.fullyQualifiedName, getPipelineName(execution))
 
-    for (fromTable <- inputTableEntities; toTable <- outputTableEntities) {
+    for ((_, fromTable) <- inputTableEntities;
+         toTable <- outputTableEntities) {
       val lineageDetails = LineageDetails(
-        pipeline,
+        pipeline.toReference,
         execution.toString(),
         execution.logical.origin.sqlText.orNull,
         Seq()
       )
 
-      openMetadataClient.addLineage(fromTable, toTable, lineageDetails)
+      openMetadataClient.addLineage(fromTable, toTable._2, lineageDetails)
     }
+  }
+
+  private def getTableColumnMappings(
+    sparkTableNames: List[String]): Map[String, OpenMetadataEntity] = {
+    sparkTableNames.map { table =>
+      (table, getTableEntity(table))
+    }.toMap
+  }
+
+  private def getTableNameToEntityMapping(
+    sparkTableNames: List[String]): Map[String, OpenMetadataEntity] = {
+    sparkTableNames.map { table =>
+      (table, getTableEntity(table))
+    }.toMap
   }
 
   private def getTableEntity(tableName: String): OpenMetadataEntity = {

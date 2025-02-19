@@ -15,21 +15,20 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{LineageDetails, OpenMetadataEntity}
+import com.fasterxml.jackson.annotation.JsonProperty
 
+case class AddLineageRequest(
+  @JsonProperty("edge")
+  edge: LineageEdge)
 
-trait OpenMetadataClient {
-  def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity
+case class LineageEdge(
+  @JsonProperty("fromEntity")
+  fromEntity: OpenMetadataEntityReference,
+  @JsonProperty("toEntity")
+  toEntity: OpenMetadataEntityReference,
+  @JsonProperty("lineageDetails")
+  lineageDetails: LineageDetails
+)
 
-  def createPipelineIfNotExists(pipelineService: String, pipeline: String): OpenMetadataEntity
-
-  def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity]
-
-  def addLineage(
-    from: OpenMetadataEntity,
-    to: OpenMetadataEntity,
-    lineageDetails: LineageDetails
-  ): Unit
-}

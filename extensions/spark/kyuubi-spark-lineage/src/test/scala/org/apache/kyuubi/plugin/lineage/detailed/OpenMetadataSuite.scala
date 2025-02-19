@@ -45,7 +45,7 @@ class OpenMetadataSuite extends KyuubiFunSuite
         "spark.sql.queryExecutionListeners",
         "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
       .set(DISPATCHERS.key, "OPEN_METADATA")
-      .set("spark.app.name", "test_spark_app_name_3")
+      .set("spark.app.name", "test_spark_app_name_6")
       .set("spark.kyuubi.plugin.lineage.openmetadata.server",
         "http://localhost:8585/api")
       .set("spark.kyuubi.plugin.lineage.openmetadata.jwt",
@@ -70,6 +70,7 @@ class OpenMetadataSuite extends KyuubiFunSuite
         spark.sql("create table Tags(c string, d string)")
         val sqlQuery = "insert into Tags select a, b from Users"
         spark.sql(sqlQuery).collect()
+        Thread.sleep(5000L)
       }
     }
   }

@@ -14,7 +14,7 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
 
 import feign.{Headers, Param, RequestLine}
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntityInfo
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{AddLineageRequest, OpenMetadataEntityInfo, OpenMetadataEntitySearchResponse}
 import org.openmetadata.client.model._
 
 trait OpenMetadataApi {
@@ -37,5 +37,5 @@ trait OpenMetadataApi {
 
   @RequestLine("PUT /v1/lineage")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
-  def addLineageEdge(addLineage: AddLineage): Unit
+  def addLineageEdge(addLineage: AddLineageRequest): Unit
 }

@@ -18,8 +18,8 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.BareRestOpenMetadataClient.{PIPELINE_ENTITY_TYPE, PIPELINE_SERVICE_ENTITY_TYPE}
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.{LineageDetails, OpenMetadataApi}
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.OpenMetadataApi
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{AddLineageRequest, LineageDetails, LineageEdge, OpenMetadataEntity}
 import org.openmetadata.client.model._
 import org.openmetadata.schema.security.client.OpenMetadataJWTClientConfig
 import org.openmetadata.schema.services.connections.metadata.{AuthProvider, OpenMetadataConnection}
@@ -64,14 +64,9 @@ class BareRestOpenMetadataClient(
     from: OpenMetadataEntity,
     to: OpenMetadataEntity,
     lineageDetails: LineageDetails): Unit = {
-    val entitiesEdge = new EntitiesEdge()
-      .lineageDetails(lineageDetails)
-      .fromEntity(toEntityRef(from))
-      .toEntity(toEntityRef(to))
-
-    val request = new AddLineage()
-      .edge(entitiesEdge)
-
+    val request = AddLineageRequest(
+      LineageEdge(from.toReference, to.toReference, lineageDetails)
+    )
     openMetadataApi.addLineageEdge(request)
   }
 

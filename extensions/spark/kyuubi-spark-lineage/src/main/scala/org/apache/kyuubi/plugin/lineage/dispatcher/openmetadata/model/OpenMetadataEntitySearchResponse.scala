@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
 
 case class OpenMetadataEntitySearchResponse(
   @JsonProperty("hits")
