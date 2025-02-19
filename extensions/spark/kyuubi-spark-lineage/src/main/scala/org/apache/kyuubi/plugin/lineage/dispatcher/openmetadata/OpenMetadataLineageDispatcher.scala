@@ -17,15 +17,14 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
+import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.QueryExecution
-
-import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
 
 class OpenMetadataLineageDispatcher extends LineageDispatcher with Logging {
   private lazy val lineageLogger: OpenMetadataLineageLogger = {
     val conf = OpenMetadataConfig()
-    val openMetadataClient = new RestOpenMetadataClient(conf.serverAddress, conf.jwt)
+    val openMetadataClient = new BareRestOpenMetadataClient(conf.serverAddress, conf.jwt)
     new OpenMetadataLineageLogger(
       openMetadataClient, conf.databaseServiceNames, conf.pipelineServiceName)
   }
@@ -36,8 +35,10 @@ class OpenMetadataLineageDispatcher extends LineageDispatcher with Logging {
         .filter(l => l.inputTables.nonEmpty || l.outputTables.nonEmpty)
         .foreach(lineageLogger.log(qe, _))
     } catch {
-      case t: Throwable =>
+      case t: Throwable => {
+        t.printStackTrace()
         logWarning("Send lineage to OpenMetadata failed.", t)
+      }
     }
   }
 

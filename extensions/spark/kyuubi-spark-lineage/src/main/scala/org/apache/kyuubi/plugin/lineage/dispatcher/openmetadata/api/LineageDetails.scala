@@ -15,16 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
 
-import java.util.UUID
+case class LineageDetails(
+  @JsonProperty("pipeline")
+  pipeline: OpenMetadataEntity,
+  @JsonProperty("description")
+  description: String,
+  @JsonProperty("sqlQuery")
+  sqlQuery: String,
+  @JsonProperty("columnsLineage")
+  columnsLineage: Seq[ColumnLineage]
+)
 
-case class OpenMetadataEntity(
-  @JsonProperty("id")
-  id: UUID,
-  @JsonProperty("fullyQualifiedName")
-  fullyQualifiedName: String,
-  @JsonProperty("entityType")
-  entityType: String)
+case class ColumnLineage(
+  toColumn: String,
+  fromColumns: Seq[String]
+)
+

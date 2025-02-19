@@ -17,20 +17,20 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-import java.util.UUID
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.LineageDetails
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
 
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{OpenMetadataEntity, OpenMetadataPipeline}
 
 trait OpenMetadataClient {
   def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity
 
-  def createPipelineIfNotExists(pipelineServiceId: UUID, pipeline: String): OpenMetadataPipeline
+  def createPipelineIfNotExists(pipelineService: String, pipeline: String): OpenMetadataEntity
 
   def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity]
 
   def addLineage(
-    pipeline: OpenMetadataPipeline,
     from: OpenMetadataEntity,
-    to: OpenMetadataEntity
+    to: OpenMetadataEntity,
+    lineageDetails: LineageDetails
   ): Unit
 }

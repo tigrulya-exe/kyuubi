@@ -17,27 +17,34 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-import org.apache.spark.sql.execution.QueryExecution
-
 import org.apache.kyuubi.plugin.lineage.Lineage
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.LineageDetails
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
+import org.apache.spark.sql.execution.QueryExecution
 
 class OpenMetadataLineageLogger(
   val openMetadataClient: OpenMetadataClient,
   val databaseServiceNames: Seq[String],
   pipelineServiceName: String) {
-  private val pipelineServiceId = openMetadataClient
-    .createPipelineServiceIfNotExists(pipelineServiceName).id
+  private val pipelineService = openMetadataClient
+    .createPipelineServiceIfNotExists(pipelineServiceName)
 
   def log(execution: QueryExecution, lineage: Lineage): Unit = {
     val inputTableEntities = lineage.inputTables.map(getTableEntity)
     val outputTableEntities = lineage.outputTables.map(getTableEntity)
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
-      pipelineServiceId, getPipelineName(execution))
+      pipelineService.fullyQualifiedName, getPipelineName(execution))
 
     for (fromTable <- inputTableEntities; toTable <- outputTableEntities) {
-      openMetadataClient.addLineage(pipeline, fromTable, toTable)
+      val lineageDetails = LineageDetails(
+        pipeline,
+        execution.toString(),
+        execution.logical.origin.sqlText.orNull,
+        Seq()
+      )
+
+      openMetadataClient.addLineage(fromTable, toTable, lineageDetails)
     }
   }
 
@@ -70,11 +77,15 @@ class OpenMetadataLineageLogger(
   }
 
   private def getTableEntityPattern(tableName: String, prefixes: String*): String = {
-    val prefix = prefixes.mkString("", ".", ".")
-    s"$prefix*$tableName"
+    val prefix = if (prefixes.isEmpty) {
+      ""
+    } else {
+      prefixes.mkString("", ".", ".")
+    }
+    s"$prefix*${tableName.split("\\.").last}"
   }
 
   private def getPipelineName(execution: QueryExecution): String = {
-    execution.sparkSession.conf.get("spark.app.name")
+    execution.sparkSession.conf.get("spark.app.name") + "_" + execution.id
   }
 }

@@ -14,19 +14,36 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind._
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import feign.Feign
 import feign.form.FormEncoder
 import feign.jackson.{JacksonDecoder, JacksonEncoder}
 import feign.okhttp.OkHttpClient
 import feign.slf4j.Slf4jLogger
 import org.openapitools.jackson.nullable.JsonNullableModule
+import org.openmetadata.client.model.TimeValue
 import org.openmetadata.client.security.factory.AuthenticationProviderFactory
 import org.openmetadata.client.{ApiClient, RFC3339DateFormat}
 import org.openmetadata.schema.services.connections.metadata.OpenMetadataConnection
 
 class OpenMetadataGateway(config: OpenMetadataConnection) {
+
+  private lazy val objectMapper = new ObjectMapper()
+    .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
+    .enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
+    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+    .setDateFormat(new RFC3339DateFormat)
+    .registerModule(new JavaTimeModule)
+    .registerModule(new JsonNullableModule)
+    .registerModule(DefaultScalaModule)
+    .registerModule(fixModule)
+    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
   private val apiClient: ApiClient = {
     val client = new ApiClient()
@@ -38,8 +55,9 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     client
   }
 
-  def buildClient[T <: ApiClient.Api](clientClass: Class[T]): T = {
-    apiClient.buildClient(clientClass)
+  //  def buildClient[T <: ApiClient.Api](clientClass: Class[T]): T = {
+  def buildClient[T](clientClass: Class[T]): T = {
+    apiClient.getFeignBuilder.target(clientClass, apiClient.getBasePath)
   }
 
   private def feignBuilder = Feign.builder
@@ -48,15 +66,13 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     .logger(new Slf4jLogger)
     .client(new OkHttpClient)
 
-  private def objectMapper = new ObjectMapper()
-    .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
-    .enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
-    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-    .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
-    .disable(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES)
-    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .setDateFormat(new RFC3339DateFormat)
-    .registerModule(new JavaTimeModule)
-    .registerModule(new JsonNullableModule)
-    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+  private def fixModule = new SimpleModule()
+    .addDeserializer(classOf[TimeValue], new TimeValueDeserializer())
+
+  private class TimeValueDeserializer extends JsonDeserializer[TimeValue] {
+
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): TimeValue = {
+      new TimeValue()
+    }
+  }
 }

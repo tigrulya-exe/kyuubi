@@ -15,16 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.OpenMetadataEntity
 
-import java.util.UUID
+case class OpenMetadataEntitySearchResponse(
+  @JsonProperty("hits")
+  hits: OpenMetadataEntitySearchHits)
 
-case class OpenMetadataEntity(
-  @JsonProperty("id")
-  id: UUID,
-  @JsonProperty("fullyQualifiedName")
-  fullyQualifiedName: String,
-  @JsonProperty("entityType")
-  entityType: String)
+case class OpenMetadataEntitySearchHits(
+  @JsonProperty("hits")
+  hits: Seq[OpenMetadataEntitySearchHit])
+
+case class OpenMetadataEntitySearchHit(
+  @JsonProperty("_source")
+  entity: OpenMetadataEntity)

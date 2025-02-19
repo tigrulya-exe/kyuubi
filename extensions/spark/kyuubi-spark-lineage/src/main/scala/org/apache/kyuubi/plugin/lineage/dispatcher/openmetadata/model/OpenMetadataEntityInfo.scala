@@ -17,6 +17,16 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 import java.util.UUID
 
-class OpenMetadataPipeline(id: UUID) extends OpenMetadataEntity(id, id.toString, "pipeline")
+case class OpenMetadataEntityInfo(
+  @JsonProperty("id")
+  id: UUID,
+  @JsonProperty("fullyQualifiedName")
+  fullyQualifiedName: String) {
+
+  def withType(entityType: String): OpenMetadataEntity =
+    OpenMetadataEntity(id, fullyQualifiedName, entityType)
+}
