@@ -19,13 +19,9 @@ package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-case class OpenMetadataEntitySearchResponse(
-  @JsonProperty("hits")
-  hits: OpenMetadataEntitySearchHits)
+case class OpenMetadataEntitySearchResponse(hits: OpenMetadataEntitySearchHits)
 
-case class OpenMetadataEntitySearchHits(
-  @JsonProperty("hits")
-  hits: Seq[OpenMetadataEntitySearchHit])
+case class OpenMetadataEntitySearchHits(hits: Seq[OpenMetadataEntitySearchHit])
 
 case class OpenMetadataEntitySearchHit(
   @JsonProperty("_source")

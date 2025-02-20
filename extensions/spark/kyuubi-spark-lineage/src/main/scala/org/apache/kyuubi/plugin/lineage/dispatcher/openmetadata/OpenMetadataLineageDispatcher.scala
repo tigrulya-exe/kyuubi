@@ -33,7 +33,7 @@ class OpenMetadataLineageDispatcher(
         .filter(l => l.inputTables.nonEmpty && l.outputTables.nonEmpty)
         .foreach(lineageLogger.log(qe, _))
     } catch {
-      case t: Throwable => logWarning("Send lineage to OpenMetadata failed.", t)
+      case t: Throwable => logWarning("OpenMetadata lineage logging failed.", t)
     }
   }
 

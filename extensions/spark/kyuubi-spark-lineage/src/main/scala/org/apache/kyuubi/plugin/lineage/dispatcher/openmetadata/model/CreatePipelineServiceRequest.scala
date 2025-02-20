@@ -17,11 +17,6 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
 case class CreatePipelineServiceRequest(
-  @JsonProperty("name")
   name: String,
-  @JsonProperty("serviceType")
-  serviceType: String
-)
+  serviceType: String)

@@ -17,34 +17,25 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
 import java.util.UUID
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 case class OpenMetadataEntity(
-  @JsonProperty("id")
   id: UUID,
-  @JsonProperty("fullyQualifiedName")
   fullyQualifiedName: String,
-  @JsonProperty("entityType")
   entityType: String) {
 
   def toReference: OpenMetadataEntityReference =
     OpenMetadataEntityReference(id, entityType)
 }
 
-case class OpenMetadataEntityInfo(
-  @JsonProperty("id")
-  id: UUID,
-  @JsonProperty("fullyQualifiedName")
-  fullyQualifiedName: String) {
-
+case class OpenMetadataEntityInfo(id: UUID, fullyQualifiedName: String) {
   def withType(entityType: String): OpenMetadataEntity =
     OpenMetadataEntity(id, fullyQualifiedName, entityType)
 }
 
 case class OpenMetadataEntityReference(
-  @JsonProperty("id")
   id: UUID,
   @JsonProperty("type")
   entityType: String)

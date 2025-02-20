@@ -17,25 +17,14 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
 case class LineageDetails(
-  @JsonProperty("pipeline")
   pipeline: OpenMetadataEntityReference,
-  @JsonProperty("description")
   description: String,
-  @JsonProperty("sqlQuery")
   sqlQuery: String,
-  @JsonProperty("columnsLineage")
   columnsLineage: Seq[EntityColumnLineage],
-  @JsonProperty("source")
-  source: String = "SparkLineage"
-)
+  source: String = "SparkLineage")
 
 case class EntityColumnLineage(
-  @JsonProperty("toColumn")
   toColumn: String,
-  @JsonProperty("fromColumns")
-  fromColumns: Seq[String]
-)
+  fromColumns: Seq[String])
 

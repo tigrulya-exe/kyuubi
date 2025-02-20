@@ -20,9 +20,10 @@ package org.apache.kyuubi.plugin.lineage.detailed
 import org.apache.spark.SparkConf
 import org.apache.spark.kyuubi.lineage.LineageConf.DISPATCHERS
 import org.apache.spark.sql.SparkListenerExtensionTest
-
 import org.apache.kyuubi.KyuubiFunSuite
 import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
+
+import scala.reflect.io.File
 
 class OpenMetadataSuite extends KyuubiFunSuite
   with SparkListenerExtensionTest {
@@ -61,7 +62,7 @@ class OpenMetadataSuite extends KyuubiFunSuite
           "r-DMejweCywyzx_cW2cDGlsO1KVIUFJr9hnZYl69ZvdwXJELcWk8y7PR4RVgLjVvNJ5_ol1hdef1" +
           "lbfFYzuzXlvS-x22rW_l3HDB09OOlcv5i-FkZU_6yA")
       .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName",
-        "CHACHABRRRSparkOnKyuubiServiceQ")
+        "BRR_CHACHABRRRSparkOnKyuubiServiceQ")
   }
 
   test("lineage event was written to HDFS") {
@@ -69,7 +70,15 @@ class OpenMetadataSuite extends KyuubiFunSuite
       withTable("Categories") { _ =>
         spark.sql("create table Users(user_id string, email string)")
         spark.sql("create table Categories(category_id string, name string)")
-        val sqlQuery = "insert into Categories select user_id, email from Users"
+
+        val tableDirectory = getClass.getResource("/").getPath + "table_directory"
+        val directory = File(tableDirectory).createDirectory()
+        val sqlQuery = s"""
+                                     |INSERT OVERWRITE DIRECTORY '${directory.path}'
+                                     |USING parquet
+                                     |SELECT * FROM Users""".stripMargin
+
+//        val sqlQuery = "insert into Categories select user_id, email from Users"
         spark.sql(sqlQuery).collect()
         Thread.sleep(5000L)
       }

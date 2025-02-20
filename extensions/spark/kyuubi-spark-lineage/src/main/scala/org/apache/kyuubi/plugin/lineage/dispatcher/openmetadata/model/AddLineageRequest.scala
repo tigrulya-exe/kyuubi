@@ -17,18 +17,10 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
-
-case class AddLineageRequest(
-  @JsonProperty("edge")
-  edge: LineageEdge)
+case class AddLineageRequest(edge: LineageEdge)
 
 case class LineageEdge(
-  @JsonProperty("fromEntity")
   fromEntity: OpenMetadataEntityReference,
-  @JsonProperty("toEntity")
   toEntity: OpenMetadataEntityReference,
-  @JsonProperty("lineageDetails")
-  lineageDetails: LineageDetails
-)
+  lineageDetails: LineageDetails)
 
