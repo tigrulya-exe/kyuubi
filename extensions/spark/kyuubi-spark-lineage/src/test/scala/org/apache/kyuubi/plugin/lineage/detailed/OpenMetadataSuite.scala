@@ -45,7 +45,7 @@ class OpenMetadataSuite extends KyuubiFunSuite
         "spark.sql.queryExecutionListeners",
         "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
       .set(DISPATCHERS.key, "OPEN_METADATA")
-      .set("spark.app.name", "COLUMN_new_test_spark_app_name")
+      .set("spark.app.name", "test_spark_app_name")
       .set("spark.kyuubi.plugin.lineage.openmetadata.server",
         "http://localhost:8585/api")
       .set("spark.kyuubi.plugin.lineage.openmetadata.jwt",
@@ -60,15 +60,15 @@ class OpenMetadataSuite extends KyuubiFunSuite
           "r-DMejweCywyzx_cW2cDGlsO1KVIUFJr9hnZYl69ZvdwXJELcWk8y7PR4RVgLjVvNJ5_ol1hdef1" +
           "lbfFYzuzXlvS-x22rW_l3HDB09OOlcv5i-FkZU_6yA")
       .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName",
-        "SparkOnKyuubiService")
+        "SparkOnKyuubiServiceSecond")
   }
 
   test("lineage event was written to HDFS") {
     withTable("Users") { _ =>
-      withTable("Tags") { _ =>
-        spark.sql("create table Users(a string, b string)")
-        spark.sql("create table Categories(c string, d string)")
-        val sqlQuery = "insert into Categories select a, b from Users"
+      withTable("Categories") { _ =>
+        spark.sql("create table Users(user_id string, email string)")
+        spark.sql("create table Categories(category_id string, name string)")
+        val sqlQuery = "insert into Categories select user_id, email from Users"
         spark.sql(sqlQuery).collect()
         Thread.sleep(5000L)
       }

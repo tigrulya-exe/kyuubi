@@ -92,12 +92,12 @@ class OpenMetadataLineageLogger(
   }
 
   private def extractTableName(fullColumnName: String): String =
-    splitColumnName(fullColumnName)._2
+    splitColumnName(fullColumnName)._1
 
   private def splitColumnName(fullColumnName: String): (String, String) = {
     fullColumnName.lastIndexOf('.') match {
-      case idx => (fullColumnName.substring(0, idx), fullColumnName.substring(idx + 1))
       case -1 => throw new RuntimeException("TODO")
+      case idx => (fullColumnName.substring(0, idx), fullColumnName.substring(idx + 1))
     }
   }
 
