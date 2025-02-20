@@ -34,8 +34,10 @@ class OpenMetadataLineageLogger(
     val inputTablesEntities = getTableNameToEntityMapping(lineage.inputTables)
     val outputTableEntities = getTableNameToEntityMapping(lineage.outputTables)
 
+    val sqlQuery = execution.logical.origin.sqlText.orNull
+
     val pipeline = openMetadataClient.createPipelineIfNotExists(
-      pipelineService.fullyQualifiedName, getPipelineName(execution))
+      pipelineService.fullyQualifiedName, getPipelineName(execution), sqlQuery)
 
     val entityColumnLineage = buildEntityColumnsLineage(
       inputTablesEntities,
@@ -48,7 +50,7 @@ class OpenMetadataLineageLogger(
       val lineageDetails = LineageDetails(
         pipeline.toReference,
         execution.toString(),
-        execution.logical.origin.sqlText.orNull,
+        sqlQuery,
         getEntityColumnsLineage(fromTable, toTable, entityColumnLineage)
       )
 

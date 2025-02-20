@@ -14,8 +14,7 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import feign.{Headers, Param, RequestLine}
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{AddLineageRequest, OpenMetadataEntityInfo, OpenMetadataEntitySearchResponse}
-import org.openmetadata.client.model._
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
 trait OpenMetadataApi {
   @RequestLine(
@@ -28,12 +27,12 @@ trait OpenMetadataApi {
 
   @RequestLine("PUT /v1/pipelines")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
-  def createOrUpdatePipeline(createPipeline: CreatePipeline): OpenMetadataEntityInfo
+  def createOrUpdatePipeline(createPipeline: CreatePipelineRequest): OpenMetadataEntityInfo
 
   @RequestLine("PUT /v1/services/pipelineServices")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
   def createOrUpdatePipelineService(
-    createPipelineService: CreatePipelineService): OpenMetadataEntityInfo
+    createPipelineService: CreatePipelineServiceRequest): OpenMetadataEntityInfo
 
   @RequestLine("PUT /v1/lineage")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))

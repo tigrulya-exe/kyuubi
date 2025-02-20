@@ -60,7 +60,7 @@ class OpenMetadataSuite extends KyuubiFunSuite
           "r-DMejweCywyzx_cW2cDGlsO1KVIUFJr9hnZYl69ZvdwXJELcWk8y7PR4RVgLjVvNJ5_ol1hdef1" +
           "lbfFYzuzXlvS-x22rW_l3HDB09OOlcv5i-FkZU_6yA")
       .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName",
-        "SparkOnKyuubiServiceSecond")
+        "CHACHABRRRSparkOnKyuubiServiceQ")
   }
 
   test("lineage event was written to HDFS") {

@@ -191,6 +191,7 @@
         <scopt.version>4.1.0</scopt.version>
         <slf4j.version>1.7.36</slf4j.version>
         <snakeyaml.version>2.2</snakeyaml.version>
+        <feign-version>13.5</feign-version>
         <!--
           DO NOT forget to change the following properties when change the minor version of Spark:
           `delta.version`, `delta.artifact`, `maven.plugin.scalatest.exclude.tags`
@@ -1183,6 +1184,30 @@
                 <groupId>org.apache.paimon</groupId>
                 <artifactId>paimon-spark-${spark.binary.version}</artifactId>
                 <version>${paimon.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-core</artifactId>
+                <version>${feign-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-jackson</artifactId>
+                <version>${feign-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-slf4j</artifactId>
+                <version>${feign-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.openfeign</groupId>
+                <artifactId>feign-okhttp</artifactId>
+                <version>${feign-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

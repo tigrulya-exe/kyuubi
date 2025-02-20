@@ -29,7 +29,7 @@ class OpenMetadataLineageDispatcher(
   override def send(qe: QueryExecution, lineageOpt: Option[Lineage]): Unit = {
     try {
       lineageOpt
-        .filter(l => l.inputTables.nonEmpty || l.outputTables.nonEmpty)
+        .filter(l => l.inputTables.nonEmpty && l.outputTables.nonEmpty)
         .foreach(lineageLogger.log(qe, _))
     } catch {
       case t: Throwable => {

@@ -19,16 +19,19 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import feign.Feign
 import feign.Logger.Level
-import feign.form.FormEncoder
 import feign.jackson.{JacksonDecoder, JacksonEncoder}
 import feign.okhttp.OkHttpClient
 import feign.slf4j.Slf4jLogger
-import org.openapitools.jackson.nullable.JsonNullableModule
-import org.openmetadata.client.security.factory.AuthenticationProviderFactory
-import org.openmetadata.client.{ApiClient, RFC3339DateFormat}
-import org.openmetadata.schema.services.connections.metadata.OpenMetadataConnection
 
-class OpenMetadataGateway(config: OpenMetadataConnection) {
+class OpenMetadataClientFactory(
+  serverAddress: String,
+  authTokenProvider: AuthenticationTokenProvider) {
+
+  private val basePath = if (serverAddress.endsWith("/")) {
+    serverAddress
+  } else {
+    serverAddress + "/"
+  }
 
   private lazy val objectMapper = new ObjectMapper()
     .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
@@ -36,31 +39,19 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
     .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .setDateFormat(new RFC3339DateFormat)
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule)
-    .registerModule(new JsonNullableModule)
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-  private val apiClient: ApiClient = {
-    val client = new ApiClient()
-      .setFeignBuilder(feignBuilder)
-      .setBasePath(config.getHostPort + "/")
-
-    client.addAuthorization("oauth", new AuthenticationProviderFactory().getAuthProvider(config))
-
-    client
-  }
-
-  def buildClient[T](clientClass: Class[T]): T = {
-    apiClient.getFeignBuilder.target(clientClass, apiClient.getBasePath)
-  }
-
-  private def feignBuilder = Feign.builder
-    .encoder(new FormEncoder(new JacksonEncoder(objectMapper)))
+  private lazy val feignBuilder: Feign.Builder = Feign.builder
+    .encoder(new JacksonEncoder(objectMapper))
     .decoder(new JacksonDecoder(objectMapper))
+    .requestInterceptor(new BearerAuthInterceptor(authTokenProvider))
     .logLevel(Level.FULL)
     .logger(new Slf4jLogger)
-    //    .logger(new ErrorLogger)
     .client(new OkHttpClient)
+
+  def buildClient(): OpenMetadataApi = {
+    feignBuilder.target(classOf[OpenMetadataApi], basePath)
+  }
 }
