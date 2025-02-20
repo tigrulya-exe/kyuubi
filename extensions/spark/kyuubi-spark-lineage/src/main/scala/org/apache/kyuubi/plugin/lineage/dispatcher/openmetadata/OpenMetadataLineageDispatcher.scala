@@ -17,17 +17,14 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient
 import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.QueryExecution
 
-class OpenMetadataLineageDispatcher extends LineageDispatcher with Logging {
-  private lazy val lineageLogger: OpenMetadataLineageLogger = {
-    val conf = OpenMetadataConfig()
-    val openMetadataClient = new BareRestOpenMetadataClient(conf.serverAddress, conf.jwt)
-    new OpenMetadataLineageLogger(
-      openMetadataClient, conf.databaseServiceNames, conf.pipelineServiceName)
-  }
+class OpenMetadataLineageDispatcher(
+  private val lineageLogger: OpenMetadataLineageLogger
+) extends LineageDispatcher with Logging {
 
   override def send(qe: QueryExecution, lineageOpt: Option[Lineage]): Unit = {
     try {
@@ -46,4 +43,16 @@ class OpenMetadataLineageDispatcher extends LineageDispatcher with Logging {
     // ignore
   }
 
+}
+
+object OpenMetadataLineageDispatcher {
+
+  def apply(): OpenMetadataLineageDispatcher = {
+    val conf = OpenMetadataConfig()
+    val lineageLogger = new OpenMetadataLineageLogger(
+      new RestOpenMetadataClient(conf.serverAddress, conf.jwt),
+      conf.databaseServiceNames,
+      conf.pipelineServiceName)
+    new OpenMetadataLineageDispatcher(lineageLogger)
+  }
 }

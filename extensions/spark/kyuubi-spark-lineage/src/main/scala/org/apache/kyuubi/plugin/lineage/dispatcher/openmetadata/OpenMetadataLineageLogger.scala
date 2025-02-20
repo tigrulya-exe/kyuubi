@@ -17,6 +17,7 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.OpenMetadataClient
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{EntityColumnLineage, LineageDetails, OpenMetadataEntity}
 import org.apache.kyuubi.plugin.lineage.{ColumnLineage, Lineage}
 import org.apache.spark.sql.execution.QueryExecution
@@ -25,80 +26,91 @@ class OpenMetadataLineageLogger(
   val openMetadataClient: OpenMetadataClient,
   val databaseServiceNames: Seq[String],
   pipelineServiceName: String) {
-  private val pipelineService = openMetadataClient
+
+  private lazy val pipelineService = openMetadataClient
     .createPipelineServiceIfNotExists(pipelineServiceName)
 
   def log(execution: QueryExecution, lineage: Lineage): Unit = {
-    val inputTableEntities = getTableNameToEntityMapping(lineage.inputTables)
+    val inputTablesEntities = getTableNameToEntityMapping(lineage.inputTables)
     val outputTableEntities = getTableNameToEntityMapping(lineage.outputTables)
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
       pipelineService.fullyQualifiedName, getPipelineName(execution))
 
-    val entityColumnLineage = buildEntityColumnLineage(
-      inputTableEntities,
+    val entityColumnLineage = buildEntityColumnsLineage(
+      inputTablesEntities,
       outputTableEntities,
       lineage.columnLineage
     )
 
-    for (fromTable <- inputTableEntities.values;
+    for (fromTable <- inputTablesEntities.values;
          toTable <- outputTableEntities.values) {
       val lineageDetails = LineageDetails(
         pipeline.toReference,
         execution.toString(),
         execution.logical.origin.sqlText.orNull,
-        getEntityColumnLineage(fromTable, toTable, entityColumnLineage)
+        getEntityColumnsLineage(fromTable, toTable, entityColumnLineage)
       )
 
       openMetadataClient.addLineage(fromTable, toTable, lineageDetails)
     }
   }
 
-  private def getEntityColumnLineage(
-    inputEntity: OpenMetadataEntity,
-    outputEntity: OpenMetadataEntity,
-    entityColumnLineage: Map[String, Seq[EntityColumnLineage]]
+  private def getEntityColumnsLineage(
+    inputTable: OpenMetadataEntity,
+    outputTable: OpenMetadataEntity,
+    outputTableToColumnsLineage: Map[String, Seq[EntityColumnLineage]]
   ): Seq[EntityColumnLineage] = {
-    entityColumnLineage.get(outputEntity.fullyQualifiedName)
-      .map { lineages =>
-        lineages.map { lineage =>
-          EntityColumnLineage(
-            lineage.toColumn,
-            lineage.fromColumns
-              .filter(inputEntity.fullyQualifiedName == extractTableName(_))
-          )
-        }
-      }
-      .getOrElse {
-        throw new RuntimeException("TODO")
+    outputTableToColumnsLineage.get(outputTable.fullyQualifiedName)
+      .map { columnsLineage =>
+        columnsLineage.map(toInputTableColumnLineage(inputTable, _))
+          .filter(_.isDefined)
+          .map(_.get)
+      }.getOrElse {
+        throw new RuntimeException(
+          s"Malformed lineages map: $outputTableToColumnsLineage. " +
+            s"Key for table ${inputTable.fullyQualifiedName} not found.")
       }
   }
 
-  private def buildEntityColumnLineage(
+  private def toInputTableColumnLineage(
+    inputTable: OpenMetadataEntity,
+    columnLineage: EntityColumnLineage
+  ): Option[EntityColumnLineage] = {
+    val inputTableColumnsLineage = columnLineage.fromColumns
+      .filter(inputTable.fullyQualifiedName == extractTableName(_))
+
+    if (inputTableColumnsLineage.isEmpty) {
+      None
+    } else {
+      Some(EntityColumnLineage(
+        columnLineage.toColumn,
+        inputTableColumnsLineage
+      ))
+    }
+  }
+
+  private def buildEntityColumnsLineage(
     inputEntities: Map[String, OpenMetadataEntity],
     outputEntities: Map[String, OpenMetadataEntity],
     columnLineage: List[ColumnLineage]
   ): Map[String, Seq[EntityColumnLineage]] = {
     columnLineage.map {
-      lineage => {
-        val outputEntityColumn = mapColumnName(lineage.column, outputEntities)
-        val inputEntityColumns = lineage.originalColumns
-          .map(mapColumnName(_, inputEntities))
-          .toSeq
-
-        EntityColumnLineage(outputEntityColumn, inputEntityColumns)
-      }
+      buildEntityColumnLineage(inputEntities, outputEntities, _)
     }.groupBy { lineage => extractTableName(lineage.toColumn) }
   }
 
-  private def extractTableName(fullColumnName: String): String =
-    splitColumnName(fullColumnName)._1
+  private def buildEntityColumnLineage(
+    inputEntities: Map[String, OpenMetadataEntity],
+    outputEntities: Map[String, OpenMetadataEntity],
+    lineage: ColumnLineage
+  ): EntityColumnLineage = {
+    val outputEntityColumn = mapColumnName(lineage.column, outputEntities)
+    val inputEntityColumns = lineage.originalColumns
+      .map(mapColumnName(_, inputEntities))
+      .toSeq
 
-  private def splitColumnName(fullColumnName: String): (String, String) = {
-    fullColumnName.lastIndexOf('.') match {
-      case -1 => throw new RuntimeException("TODO")
-      case idx => (fullColumnName.substring(0, idx), fullColumnName.substring(idx + 1))
-    }
+    EntityColumnLineage(outputEntityColumn, inputEntityColumns)
   }
 
   private def mapColumnName(fullColumnName: String,
@@ -114,9 +126,10 @@ class OpenMetadataLineageLogger(
   }
 
   private def getTableNameToEntityMapping(
-    sparkTableNames: List[String]): Map[String, OpenMetadataEntity] = {
-    sparkTableNames.map { table =>
-      (table, getTableEntity(table))
+    sparkTableNames: List[String]
+  ): Map[String, OpenMetadataEntity] = {
+    sparkTableNames.map {
+      table => (table, getTableEntity(table))
     }.toMap
   }
 
@@ -160,4 +173,15 @@ class OpenMetadataLineageLogger(
   private def getPipelineName(execution: QueryExecution): String = {
     execution.sparkSession.conf.get("spark.app.name") + "_" + execution.id
   }
+
+  private def splitColumnName(fullColumnName: String): (String, String) = {
+    fullColumnName.lastIndexOf('.') match {
+      case -1 => throw new IllegalArgumentException(
+        s"Wrong format of Spark column full name: $fullColumnName")
+      case idx => (fullColumnName.substring(0, idx), fullColumnName.substring(idx + 1))
+    }
+  }
+
+  private def extractTableName(fullColumnName: String): String =
+    splitColumnName(fullColumnName)._1
 }

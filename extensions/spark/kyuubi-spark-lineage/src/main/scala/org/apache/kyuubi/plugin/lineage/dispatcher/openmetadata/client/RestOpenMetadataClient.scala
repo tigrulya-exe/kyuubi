@@ -15,24 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.BareRestOpenMetadataClient.{PIPELINE_ENTITY_TYPE, PIPELINE_SERVICE_ENTITY_TYPE}
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api.OpenMetadataApi
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient._
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{AddLineageRequest, LineageDetails, LineageEdge, OpenMetadataEntity}
 import org.openmetadata.client.model._
 import org.openmetadata.schema.security.client.OpenMetadataJWTClientConfig
 import org.openmetadata.schema.services.connections.metadata.{AuthProvider, OpenMetadataConnection}
 
-class BareRestOpenMetadataClient(
+class RestOpenMetadataClient(
   serverAddress: String,
   jwt: String = null
 ) extends OpenMetadataClient {
 
-  private val openMetadataGateway: OpenMetadataGateway = {
+  private lazy val openMetadataGateway: OpenMetadataGateway = {
     val connection = new OpenMetadataConnection()
       .withHostPort(serverAddress)
-      .withApiVersion("v1")
+      .withApiVersion(API_VERSION)
 
     if (jwt != null) {
       connection.withAuthProvider(AuthProvider.OPENMETADATA)
@@ -41,23 +40,19 @@ class BareRestOpenMetadataClient(
     new OpenMetadataGateway(connection)
   }
 
-  private val openMetadataApi: OpenMetadataApi =
+  private lazy val openMetadataApi: OpenMetadataApi =
     openMetadataGateway.buildClient(classOf[OpenMetadataApi])
 
   override def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity] = {
     val searchResult = openMetadataApi.searchEntitiesWithSpecificFieldAndValue(
-      "fullyQualifiedName",
+      TABLE_ENTITY_FQN_FIELD,
       fullyQualifiedNameTemplate,
-      "table_search_index"
+      TABLE_ENTITY_SEARCH_INDEX
     )
 
-    val searchHits = searchResult.hits
-
-    if (searchHits.hits.isEmpty) {
-      None
-    } else {
-      Some(searchHits.hits.head.entity)
-    }
+    searchResult.hits.hits
+      .headOption
+      .map(_.entity)
   }
 
   override def addLineage(
@@ -89,7 +84,12 @@ class BareRestOpenMetadataClient(
   }
 }
 
-object BareRestOpenMetadataClient {
+object RestOpenMetadataClient {
+  private val API_VERSION = "v1"
+
+  private val TABLE_ENTITY_FQN_FIELD = "fullyQualifiedName"
+  private val TABLE_ENTITY_SEARCH_INDEX = "table_search_index"
+
   private val PIPELINE_ENTITY_TYPE = "pipeline"
   private val PIPELINE_SERVICE_ENTITY_TYPE = "pipelineService"
 }

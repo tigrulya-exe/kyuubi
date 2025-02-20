@@ -11,7 +11,7 @@
  *  limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.api
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import feign.{Headers, Param, RequestLine}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{AddLineageRequest, OpenMetadataEntityInfo, OpenMetadataEntitySearchResponse}

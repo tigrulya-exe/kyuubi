@@ -33,6 +33,16 @@ case class OpenMetadataEntity(
     OpenMetadataEntityReference(id, entityType)
 }
 
+case class OpenMetadataEntityInfo(
+  @JsonProperty("id")
+  id: UUID,
+  @JsonProperty("fullyQualifiedName")
+  fullyQualifiedName: String) {
+
+  def withType(entityType: String): OpenMetadataEntity =
+    OpenMetadataEntity(id, fullyQualifiedName, entityType)
+}
+
 case class OpenMetadataEntityReference(
   @JsonProperty("id")
   id: UUID,

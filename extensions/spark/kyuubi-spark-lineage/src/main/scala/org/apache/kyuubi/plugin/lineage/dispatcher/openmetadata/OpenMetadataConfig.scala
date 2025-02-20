@@ -31,7 +31,8 @@ object OpenMetadataConfig {
   def apply(): OpenMetadataConfig = {
     OpenMetadataConfig(
       SparkContextHelper.getConf(OPEN_METADATA_SERVER_ADDRESS).getOrElse {
-        throw new RuntimeException("TODO")
+        throw new IllegalArgumentException(
+          s"${OPEN_METADATA_SERVER_ADDRESS.key} option shouldn't be empty")
       },
       SparkContextHelper.getConf(OPEN_METADATA_PIPELINE_SERVICE_NAME_KEY),
       SparkContextHelper.getConf(OPEN_METADATA_DATABASE_SERVICE_NAMES_KEY),

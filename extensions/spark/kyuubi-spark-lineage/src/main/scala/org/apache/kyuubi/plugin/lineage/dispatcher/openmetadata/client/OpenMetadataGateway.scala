@@ -11,21 +11,19 @@
  *  limitations under the License.
  */
 
-package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
+package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind._
-import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import feign.Feign
-import feign.Logger.{ErrorLogger, Level}
+import feign.Logger.Level
 import feign.form.FormEncoder
 import feign.jackson.{JacksonDecoder, JacksonEncoder}
 import feign.okhttp.OkHttpClient
+import feign.slf4j.Slf4jLogger
 import org.openapitools.jackson.nullable.JsonNullableModule
-import org.openmetadata.client.model.TimeValue
 import org.openmetadata.client.security.factory.AuthenticationProviderFactory
 import org.openmetadata.client.{ApiClient, RFC3339DateFormat}
 import org.openmetadata.schema.services.connections.metadata.OpenMetadataConnection
@@ -39,10 +37,9 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
     .setDateFormat(new RFC3339DateFormat)
+    .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule)
     .registerModule(new JsonNullableModule)
-    .registerModule(DefaultScalaModule)
-    .registerModule(fixModule)
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
   private val apiClient: ApiClient = {
@@ -55,7 +52,6 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     client
   }
 
-  //  def buildClient[T <: ApiClient.Api](clientClass: Class[T]): T = {
   def buildClient[T](clientClass: Class[T]): T = {
     apiClient.getFeignBuilder.target(clientClass, apiClient.getBasePath)
   }
@@ -64,17 +60,7 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
     .encoder(new FormEncoder(new JacksonEncoder(objectMapper)))
     .decoder(new JacksonDecoder(objectMapper))
     .logLevel(Level.FULL)
-//    .logger(new Slf4jLogger)
-    .logger(new ErrorLogger)
+    .logger(new Slf4jLogger)
+    //    .logger(new ErrorLogger)
     .client(new OkHttpClient)
-
-  private def fixModule = new SimpleModule()
-    .addDeserializer(classOf[TimeValue], new TimeValueDeserializer())
-
-  private class TimeValueDeserializer extends JsonDeserializer[TimeValue] {
-
-    override def deserialize(p: JsonParser, ctxt: DeserializationContext): TimeValue = {
-      new TimeValue()
-    }
-  }
 }

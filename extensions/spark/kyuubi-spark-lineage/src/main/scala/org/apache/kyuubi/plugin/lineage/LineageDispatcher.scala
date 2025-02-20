@@ -39,7 +39,7 @@ object LineageDispatcher {
       case LineageDispatcherType.KYUUBI_EVENT => new KyuubiEventDispatcher()
       case LineageDispatcherType.KYUUBI_DETAILED_EVENT => new KyuubiDetailedEventDispatcher()
       case LineageDispatcherType.ATLAS => new AtlasLineageDispatcher()
-      case LineageDispatcherType.OPEN_METADATA => new OpenMetadataLineageDispatcher()
+      case LineageDispatcherType.OPEN_METADATA => OpenMetadataLineageDispatcher()
       case _ => throw new UnsupportedOperationException(
           s"Unsupported lineage dispatcher: $dispatcherType.")
     }
