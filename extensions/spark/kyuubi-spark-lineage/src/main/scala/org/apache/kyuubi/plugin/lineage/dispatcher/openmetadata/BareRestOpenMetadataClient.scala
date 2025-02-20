@@ -87,13 +87,6 @@ class BareRestOpenMetadataClient(
     openMetadataApi.createOrUpdatePipeline(createPipelineRequest)
       .withType(PIPELINE_ENTITY_TYPE)
   }
-
-  private def toEntityRef(entity: OpenMetadataEntity): EntityReference = {
-    val entityRef = new EntityReference()
-    entityRef.id(entity.id)
-    entityRef.`type`(entity.entityType)
-    entityRef
-  }
 }
 
 object BareRestOpenMetadataClient {

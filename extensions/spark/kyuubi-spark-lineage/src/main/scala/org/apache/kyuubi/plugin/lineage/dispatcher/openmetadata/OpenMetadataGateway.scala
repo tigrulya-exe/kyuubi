@@ -20,10 +20,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import feign.Feign
+import feign.Logger.{ErrorLogger, Level}
 import feign.form.FormEncoder
 import feign.jackson.{JacksonDecoder, JacksonEncoder}
 import feign.okhttp.OkHttpClient
-import feign.slf4j.Slf4jLogger
 import org.openapitools.jackson.nullable.JsonNullableModule
 import org.openmetadata.client.model.TimeValue
 import org.openmetadata.client.security.factory.AuthenticationProviderFactory
@@ -63,7 +63,9 @@ class OpenMetadataGateway(config: OpenMetadataConnection) {
   private def feignBuilder = Feign.builder
     .encoder(new FormEncoder(new JacksonEncoder(objectMapper)))
     .decoder(new JacksonDecoder(objectMapper))
-    .logger(new Slf4jLogger)
+    .logLevel(Level.FULL)
+//    .logger(new Slf4jLogger)
+    .logger(new ErrorLogger)
     .client(new OkHttpClient)
 
   private def fixModule = new SimpleModule()

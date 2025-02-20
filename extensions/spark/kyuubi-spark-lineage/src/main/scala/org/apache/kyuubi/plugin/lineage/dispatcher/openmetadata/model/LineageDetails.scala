@@ -27,13 +27,15 @@ case class LineageDetails(
   @JsonProperty("sqlQuery")
   sqlQuery: String,
   @JsonProperty("columnsLineage")
-  columnsLineage: Seq[ColumnLineage],
+  columnsLineage: Seq[EntityColumnLineage],
   @JsonProperty("source")
   source: String = "SparkLineage"
 )
 
-case class ColumnLineage(
+case class EntityColumnLineage(
+  @JsonProperty("toColumn")
   toColumn: String,
+  @JsonProperty("fromColumns")
   fromColumns: Seq[String]
 )
 
