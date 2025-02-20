@@ -14,6 +14,7 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import feign.{Headers, Param, RequestLine}
+
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
 trait OpenMetadataApi {

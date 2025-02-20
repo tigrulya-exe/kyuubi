@@ -17,10 +17,11 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
+import org.apache.spark.sql.execution.QueryExecution
+
+import org.apache.kyuubi.plugin.lineage.{ColumnLineage, Lineage}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.OpenMetadataClient
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{EntityColumnLineage, LineageDetails, OpenMetadataEntity}
-import org.apache.kyuubi.plugin.lineage.{ColumnLineage, Lineage}
-import org.apache.spark.sql.execution.QueryExecution
 
 class OpenMetadataLineageLogger(
   val openMetadataClient: OpenMetadataClient,

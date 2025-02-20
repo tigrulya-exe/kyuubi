@@ -17,11 +17,12 @@
 
 package org.apache.kyuubi.plugin.lineage.detailed
 
-import org.apache.kyuubi.KyuubiFunSuite
-import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
 import org.apache.spark.SparkConf
 import org.apache.spark.kyuubi.lineage.LineageConf.DISPATCHERS
 import org.apache.spark.sql.SparkListenerExtensionTest
+
+import org.apache.kyuubi.KyuubiFunSuite
+import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
 
 class OpenMetadataSuite extends KyuubiFunSuite
   with SparkListenerExtensionTest {

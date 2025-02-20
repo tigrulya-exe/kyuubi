@@ -17,10 +17,11 @@
 
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
-import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient
-import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.QueryExecution
+
+import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient
 
 class OpenMetadataLineageDispatcher(
   private val lineageLogger: OpenMetadataLineageLogger
@@ -32,10 +33,7 @@ class OpenMetadataLineageDispatcher(
         .filter(l => l.inputTables.nonEmpty && l.outputTables.nonEmpty)
         .foreach(lineageLogger.log(qe, _))
     } catch {
-      case t: Throwable => {
-        t.printStackTrace()
-        logWarning("Send lineage to OpenMetadata failed.", t)
-      }
+      case t: Throwable => logWarning("Send lineage to OpenMetadata failed.", t)
     }
   }
 
