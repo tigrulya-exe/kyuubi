@@ -20,10 +20,9 @@ package org.apache.kyuubi.plugin.lineage.detailed
 import org.apache.spark.SparkConf
 import org.apache.spark.kyuubi.lineage.LineageConf.DISPATCHERS
 import org.apache.spark.sql.SparkListenerExtensionTest
+
 import org.apache.kyuubi.KyuubiFunSuite
 import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
-
-import scala.reflect.io.File
 
 class OpenMetadataSuite extends KyuubiFunSuite
   with SparkListenerExtensionTest {
@@ -48,9 +47,10 @@ class OpenMetadataSuite extends KyuubiFunSuite
         "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
       .set(DISPATCHERS.key, "OPEN_METADATA")
       .set("spark.app.name", "test_spark_app_name")
-      .set("spark.kyuubi.plugin.lineage.openmetadata.server",
-        "http://localhost:8585/api")
-      .set("spark.kyuubi.plugin.lineage.openmetadata.jwt",
+      .set("spark.kyuubi.plugin.lineage.openmetadata.server", "http://localhost:8585/api")
+      .set("spark.kyuubi.plugin.lineage.openmetadata.databaseServiceNames", "NewHive,mysql_sample")
+      .set(
+        "spark.kyuubi.plugin.lineage.openmetadata.jwt",
         "eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1" +
           "NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImRhdG" +
           "FpbnNpZ2h0c2FwcGxpY2F0aW9uYm90Iiwicm9sZXMiOltudWxsXSwiZW1haWwiOiJkYXRh" +
@@ -61,24 +61,23 @@ class OpenMetadataSuite extends KyuubiFunSuite
           "JMO6rIpjZvn3Zu-ytwtciEBZLnnQB5w2J-Xo9P0MYLwiYScGAjPdDj3q4jeSFPAn5FNBxm0odi" +
           "r-DMejweCywyzx_cW2cDGlsO1KVIUFJr9hnZYl69ZvdwXJELcWk8y7PR4RVgLjVvNJ5_ol1hdef1" +
           "lbfFYzuzXlvS-x22rW_l3HDB09OOlcv5i-FkZU_6yA")
-      .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName",
-        "BRR_CHACHABRRRSparkOnKyuubiServiceQ")
+      .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName", "HIVEEEEEE")
   }
 
   test("lineage event was written to HDFS") {
     withTable("Users") { _ =>
       withTable("Categories") { _ =>
-        spark.sql("create table Users(user_id string, email string)")
-        spark.sql("create table Categories(category_id string, name string)")
+        spark.sql("create table newtable3(column1 varchar(100))")
+        spark.sql("create table newtable5(column1 varchar(100))")
 
-        val tableDirectory = getClass.getResource("/").getPath + "table_directory"
-        val directory = File(tableDirectory).createDirectory()
-        val sqlQuery = s"""
-                                     |INSERT OVERWRITE DIRECTORY '${directory.path}'
-                                     |USING parquet
-                                     |SELECT * FROM Users""".stripMargin
+//        val tableDirectory = getClass.getResource("/").getPath + "table_directory"
+//        val directory = File(tableDirectory).createDirectory()
+//        val sqlQuery = s"""
+//                                     |INSERT OVERWRITE DIRECTORY '${directory.path}'
+//                                     |USING parquet
+//                                     |SELECT * FROM Users""".stripMargin
 
-//        val sqlQuery = "insert into Categories select user_id, email from Users"
+        val sqlQuery = "insert into newtable3 select column1 from newtable5"
         spark.sql(sqlQuery).collect()
         Thread.sleep(5000L)
       }

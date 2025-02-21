@@ -21,9 +21,8 @@ import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenM
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
 class RestOpenMetadataClient(
-  serverAddress: String,
-  jwt: String = null
-) extends OpenMetadataClient {
+    serverAddress: String,
+    jwt: String = null) extends OpenMetadataClient {
 
   private lazy val openMetadataApi: OpenMetadataApi = {
     val authTokenProvider = if (jwt != null) {
@@ -40,8 +39,7 @@ class RestOpenMetadataClient(
     val searchResult = openMetadataApi.searchEntitiesWithSpecificFieldAndValue(
       TABLE_ENTITY_FQN_FIELD,
       fullyQualifiedNameTemplate,
-      TABLE_ENTITY_SEARCH_INDEX
-    )
+      TABLE_ENTITY_SEARCH_INDEX)
 
     searchResult.hits.hits
       .headOption
@@ -49,34 +47,33 @@ class RestOpenMetadataClient(
   }
 
   override def addLineage(
-    from: OpenMetadataEntity,
-    to: OpenMetadataEntity,
-    lineageDetails: LineageDetails): Unit = {
+      from: OpenMetadataEntity,
+      to: OpenMetadataEntity,
+      lineageDetails: LineageDetails): Unit = {
     val request = AddLineageRequest(
       LineageEdge(
         fromEntity = from.toReference,
         toEntity = to.toReference,
-        lineageDetails = lineageDetails)
-    )
+        lineageDetails = lineageDetails))
     openMetadataApi.addLineageEdge(request)
   }
 
   override def createPipelineServiceIfNotExists(pipelineService: String): OpenMetadataEntity = {
     val createPipelineRequest = CreatePipelineServiceRequest(
       name = pipelineService,
-      serviceType = PIPELINE_SERVICE_TYPE
-    )
+      serviceType = PIPELINE_SERVICE_TYPE)
     openMetadataApi.createOrUpdatePipelineService(createPipelineRequest)
       .withType(PIPELINE_SERVICE_ENTITY_TYPE)
   }
 
   override def createPipelineIfNotExists(
-    pipelineService: String, pipeline: String, description: String): OpenMetadataEntity = {
+      pipelineService: String,
+      pipeline: String,
+      description: String): OpenMetadataEntity = {
     val createPipelineRequest = CreatePipelineRequest(
       service = pipelineService,
       name = pipeline,
-      description = description
-    )
+      description = description)
 
     openMetadataApi.createOrUpdatePipeline(createPipelineRequest)
       .withType(PIPELINE_ENTITY_TYPE)

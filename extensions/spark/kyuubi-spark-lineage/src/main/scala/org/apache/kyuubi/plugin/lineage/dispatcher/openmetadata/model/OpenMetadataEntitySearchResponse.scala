@@ -24,5 +24,5 @@ case class OpenMetadataEntitySearchResponse(hits: OpenMetadataEntitySearchHits)
 case class OpenMetadataEntitySearchHits(hits: Seq[OpenMetadataEntitySearchHit])
 
 case class OpenMetadataEntitySearchHit(
-  @JsonProperty("_source")
-  entity: OpenMetadataEntity)
+    @JsonProperty("_source")
+    entity: OpenMetadataEntity)

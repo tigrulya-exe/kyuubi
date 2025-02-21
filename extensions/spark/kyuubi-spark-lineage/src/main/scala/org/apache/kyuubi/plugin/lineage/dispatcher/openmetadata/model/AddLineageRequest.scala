@@ -20,7 +20,6 @@ package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 case class AddLineageRequest(edge: LineageEdge)
 
 case class LineageEdge(
-  fromEntity: OpenMetadataEntityReference,
-  toEntity: OpenMetadataEntityReference,
-  lineageDetails: LineageDetails)
-
+    fromEntity: OpenMetadataEntityReference,
+    toEntity: OpenMetadataEntityReference,
+    lineageDetails: LineageDetails)

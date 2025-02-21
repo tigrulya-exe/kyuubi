@@ -22,9 +22,9 @@ import java.util.UUID
 import com.fasterxml.jackson.annotation.JsonProperty
 
 case class OpenMetadataEntity(
-  id: UUID,
-  fullyQualifiedName: String,
-  entityType: String) {
+    id: UUID,
+    fullyQualifiedName: String,
+    entityType: String) {
 
   def toReference: OpenMetadataEntityReference =
     OpenMetadataEntityReference(id, entityType)
@@ -36,6 +36,6 @@ case class OpenMetadataEntityInfo(id: UUID, fullyQualifiedName: String) {
 }
 
 case class OpenMetadataEntityReference(
-  id: UUID,
-  @JsonProperty("type")
-  entityType: String)
+    id: UUID,
+    @JsonProperty("type")
+    entityType: String)

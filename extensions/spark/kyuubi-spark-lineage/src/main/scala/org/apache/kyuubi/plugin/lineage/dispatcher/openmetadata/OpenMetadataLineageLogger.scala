@@ -24,9 +24,9 @@ import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.OpenMetad
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{EntityColumnLineage, LineageDetails, OpenMetadataEntity}
 
 class OpenMetadataLineageLogger(
-  val openMetadataClient: OpenMetadataClient,
-  val databaseServiceNames: Seq[String],
-  pipelineServiceName: String) {
+    val openMetadataClient: OpenMetadataClient,
+    val databaseServiceNames: Seq[String],
+    pipelineServiceName: String) {
 
   private lazy val pipelineService = openMetadataClient
     .createPipelineServiceIfNotExists(pipelineServiceName)
@@ -38,32 +38,32 @@ class OpenMetadataLineageLogger(
     val sqlQuery = execution.logical.origin.sqlText.orNull
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
-      pipelineService.fullyQualifiedName, getPipelineName(execution), sqlQuery)
+      pipelineService.fullyQualifiedName,
+      getPipelineName(execution),
+      sqlQuery)
 
     val entityColumnLineage = buildEntityColumnsLineage(
       inputTablesEntities,
       outputTableEntities,
-      lineage.columnLineage
-    )
+      lineage.columnLineage)
 
     for (fromTable <- inputTablesEntities.values;
-         toTable <- outputTableEntities.values) {
+      toTable <- outputTableEntities.values) {
       val lineageDetails = LineageDetails(
         pipeline.toReference,
         execution.toString(),
         sqlQuery,
-        getEntityColumnsLineage(fromTable, toTable, entityColumnLineage)
-      )
+        getEntityColumnsLineage(fromTable, toTable, entityColumnLineage))
 
       openMetadataClient.addLineage(fromTable, toTable, lineageDetails)
     }
   }
 
   private def getEntityColumnsLineage(
-    inputTable: OpenMetadataEntity,
-    outputTable: OpenMetadataEntity,
-    outputTableToColumnsLineage: Map[String, Seq[EntityColumnLineage]]
-  ): Seq[EntityColumnLineage] = {
+      inputTable: OpenMetadataEntity,
+      outputTable: OpenMetadataEntity,
+      outputTableToColumnsLineage: Map[String, Seq[EntityColumnLineage]])
+      : Seq[EntityColumnLineage] = {
     outputTableToColumnsLineage.get(outputTable.fullyQualifiedName)
       .map { columnsLineage =>
         columnsLineage.map(toInputTableColumnLineage(inputTable, _))
@@ -77,9 +77,8 @@ class OpenMetadataLineageLogger(
   }
 
   private def toInputTableColumnLineage(
-    inputTable: OpenMetadataEntity,
-    columnLineage: EntityColumnLineage
-  ): Option[EntityColumnLineage] = {
+      inputTable: OpenMetadataEntity,
+      columnLineage: EntityColumnLineage): Option[EntityColumnLineage] = {
     val inputTableColumnsLineage = columnLineage.fromColumns
       .filter(inputTable.fullyQualifiedName == extractTableName(_))
 
@@ -88,26 +87,23 @@ class OpenMetadataLineageLogger(
     } else {
       Some(EntityColumnLineage(
         columnLineage.toColumn,
-        inputTableColumnsLineage
-      ))
+        inputTableColumnsLineage))
     }
   }
 
   private def buildEntityColumnsLineage(
-    inputEntities: Map[String, OpenMetadataEntity],
-    outputEntities: Map[String, OpenMetadataEntity],
-    columnLineage: List[ColumnLineage]
-  ): Map[String, Seq[EntityColumnLineage]] = {
+      inputEntities: Map[String, OpenMetadataEntity],
+      outputEntities: Map[String, OpenMetadataEntity],
+      columnLineage: List[ColumnLineage]): Map[String, Seq[EntityColumnLineage]] = {
     columnLineage.map {
       buildEntityColumnLineage(inputEntities, outputEntities, _)
     }.groupBy { lineage => extractTableName(lineage.toColumn) }
   }
 
   private def buildEntityColumnLineage(
-    inputEntities: Map[String, OpenMetadataEntity],
-    outputEntities: Map[String, OpenMetadataEntity],
-    lineage: ColumnLineage
-  ): EntityColumnLineage = {
+      inputEntities: Map[String, OpenMetadataEntity],
+      outputEntities: Map[String, OpenMetadataEntity],
+      lineage: ColumnLineage): EntityColumnLineage = {
     val outputEntityColumn = mapColumnName(lineage.column, outputEntities)
     val inputEntityColumns = lineage.originalColumns
       .map(mapColumnName(_, inputEntities))
@@ -116,8 +112,9 @@ class OpenMetadataLineageLogger(
     EntityColumnLineage(outputEntityColumn, inputEntityColumns)
   }
 
-  private def mapColumnName(fullColumnName: String,
-                            entityMappings: Map[String, OpenMetadataEntity]): String = {
+  private def mapColumnName(
+      fullColumnName: String,
+      entityMappings: Map[String, OpenMetadataEntity]): String = {
     val (fullTableName, columnName) = splitColumnName(fullColumnName)
 
     entityMappings.get(fullTableName)
@@ -129,8 +126,7 @@ class OpenMetadataLineageLogger(
   }
 
   private def getTableNameToEntityMapping(
-    sparkTableNames: List[String]
-  ): Map[String, OpenMetadataEntity] = {
+      sparkTableNames: List[String]): Map[String, OpenMetadataEntity] = {
     sparkTableNames.map {
       table => (table, getTableEntity(table))
     }.toMap
@@ -165,12 +161,18 @@ class OpenMetadataLineageLogger(
   }
 
   private def getTableEntityPattern(tableName: String, prefixes: String*): String = {
-    val prefix = if (prefixes.isEmpty) {
-      ""
-    } else {
-      prefixes.mkString("", ".", ".")
+    val tablePattern = tableName.split('.') match {
+      case Array(_, db, table) =>
+        s"*$db.$table"
+      case _ =>
+        throw new IllegalArgumentException("Unsupported table name format")
     }
-    s"$prefix*${tableName.split("\\.").last}"
+
+    if (prefixes.isEmpty) {
+      tablePattern
+    } else {
+      s"${prefixes.mkString(".")}.$tablePattern"
+    }
   }
 
   private def getPipelineName(execution: QueryExecution): String = {
@@ -180,7 +182,7 @@ class OpenMetadataLineageLogger(
   private def splitColumnName(fullColumnName: String): (String, String) = {
     fullColumnName.lastIndexOf('.') match {
       case -1 => throw new IllegalArgumentException(
-        s"Wrong format of Spark column full name: $fullColumnName")
+          s"Wrong format of Spark column full name: $fullColumnName")
       case idx => (fullColumnName.substring(0, idx), fullColumnName.substring(idx + 1))
     }
   }

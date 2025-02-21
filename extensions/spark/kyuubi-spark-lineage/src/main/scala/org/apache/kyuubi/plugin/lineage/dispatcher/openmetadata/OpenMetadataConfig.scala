@@ -21,11 +21,10 @@ import org.apache.spark.kyuubi.lineage.LineageConf.{OPEN_METADATA_DATABASE_SERVI
 import org.apache.spark.kyuubi.lineage.SparkContextHelper
 
 case class OpenMetadataConfig(
-  serverAddress: String,
-  pipelineServiceName: String,
-  databaseServiceNames: Seq[String] = Seq(),
-  jwt: String
-)
+    serverAddress: String,
+    pipelineServiceName: String,
+    databaseServiceNames: Seq[String] = Seq(),
+    jwt: String)
 
 object OpenMetadataConfig {
   def apply(): OpenMetadataConfig = {
@@ -36,7 +35,6 @@ object OpenMetadataConfig {
       },
       SparkContextHelper.getConf(OPEN_METADATA_PIPELINE_SERVICE_NAME_KEY),
       SparkContextHelper.getConf(OPEN_METADATA_DATABASE_SERVICE_NAMES_KEY),
-      SparkContextHelper.getConf(OPEN_METADATA_JWT_KEY).orNull,
-    )
+      SparkContextHelper.getConf(OPEN_METADATA_JWT_KEY).orNull)
   }
 }

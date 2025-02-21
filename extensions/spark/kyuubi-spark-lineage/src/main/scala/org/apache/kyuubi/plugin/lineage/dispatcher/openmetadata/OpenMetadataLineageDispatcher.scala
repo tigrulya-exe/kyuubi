@@ -24,8 +24,7 @@ import org.apache.kyuubi.plugin.lineage.{Lineage, LineageDispatcher}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient
 
 class OpenMetadataLineageDispatcher(
-  private val lineageLogger: OpenMetadataLineageLogger
-) extends LineageDispatcher with Logging {
+    private val lineageLogger: OpenMetadataLineageLogger) extends LineageDispatcher with Logging {
 
   override def send(qe: QueryExecution, lineageOpt: Option[Lineage]): Unit = {
     try {

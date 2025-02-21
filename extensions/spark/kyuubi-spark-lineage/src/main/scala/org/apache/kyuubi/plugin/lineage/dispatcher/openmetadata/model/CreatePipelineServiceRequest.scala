@@ -18,5 +18,5 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 case class CreatePipelineServiceRequest(
-  name: String,
-  serviceType: String)
+    name: String,
+    serviceType: String)

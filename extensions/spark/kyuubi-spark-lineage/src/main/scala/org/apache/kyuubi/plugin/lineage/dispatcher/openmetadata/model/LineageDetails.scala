@@ -18,13 +18,12 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model
 
 case class LineageDetails(
-  pipeline: OpenMetadataEntityReference,
-  description: String,
-  sqlQuery: String,
-  columnsLineage: Seq[EntityColumnLineage],
-  source: String = "SparkLineage")
+    pipeline: OpenMetadataEntityReference,
+    description: String,
+    sqlQuery: String,
+    columnsLineage: Seq[EntityColumnLineage],
+    source: String = "SparkLineage")
 
 case class EntityColumnLineage(
-  toColumn: String,
-  fromColumns: Seq[String])
-
+    toColumn: String,
+    fromColumns: Seq[String])
