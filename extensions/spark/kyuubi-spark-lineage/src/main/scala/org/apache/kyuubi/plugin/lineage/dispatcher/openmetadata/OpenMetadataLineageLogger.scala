@@ -18,10 +18,10 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
 import org.apache.spark.sql.execution.QueryExecution
+
 import org.apache.kyuubi.plugin.lineage.{ColumnLineage, Lineage}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.OpenMetadataClient
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{EntityColumnLineage, LineageDetails, OpenMetadataEntity}
-import org.apache.spark.kyuubi.lineage.SparkContextHelper
 
 class OpenMetadataLineageLogger(
     val openMetadataClient: OpenMetadataClient,
@@ -39,7 +39,7 @@ class OpenMetadataLineageLogger(
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
       pipelineService.fullyQualifiedName,
-      getPipelineName,
+      getPipelineName(execution),
       sqlQuery)
 
     val entityColumnLineage = buildEntityColumnsLineage(
@@ -70,7 +70,7 @@ class OpenMetadataLineageLogger(
           .filter(_.isDefined)
           .map(_.get)
       }.getOrElse {
-        throw new RuntimeException(
+        throw new IllegalArgumentException(
           s"Malformed lineages map: $outputTableToColumnsLineage. " +
             s"Key for table ${inputTable.fullyQualifiedName} not found.")
       }
@@ -121,7 +121,8 @@ class OpenMetadataLineageLogger(
       .map(_.fullyQualifiedName)
       .map { fqn => s"$fqn.$columnName" }
       .getOrElse {
-        throw new RuntimeException("TODO")
+        throw new IllegalArgumentException(s"Malformed entities map $entityMappings." +
+          s"Spark table with name $fullTableName not found")
       }
   }
 
@@ -140,7 +141,8 @@ class OpenMetadataLineageLogger(
     }
 
     maybeTableEntity.getOrElse {
-      throw new IllegalArgumentException(s"OpenMetadata Entity for table $tableName not found")
+      throw new IllegalArgumentException(
+        s"OpenMetadata Entity for table $tableName not found")
     }
   }
 
@@ -175,7 +177,9 @@ class OpenMetadataLineageLogger(
     }
   }
 
-  private def getPipelineName: String = SparkContextHelper.globalSparkContext.appName
+  private def getPipelineName(execution: QueryExecution): String = {
+    execution.sparkSession.sparkContext.appName
+  }
 
   private def splitColumnName(fullColumnName: String): (String, String) = {
     fullColumnName.lastIndexOf('.') match {

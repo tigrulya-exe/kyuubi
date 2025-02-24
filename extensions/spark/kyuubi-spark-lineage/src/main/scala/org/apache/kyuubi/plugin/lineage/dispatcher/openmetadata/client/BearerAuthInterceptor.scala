@@ -19,16 +19,24 @@ package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import feign.{RequestInterceptor, RequestTemplate}
 
+import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.BearerAuthInterceptor.{AUTH_HEADER, BEARER_PREFIX}
+
 class BearerAuthInterceptor(
-    val tokenProvider: AuthenticationTokenProvider) extends RequestInterceptor {
+  val tokenProvider: AuthenticationTokenProvider
+) extends RequestInterceptor {
   override def apply(requestTemplate: RequestTemplate): Unit = {
-    if (requestTemplate.headers.containsKey("Authorization")) {
+    if (requestTemplate.headers.containsKey(AUTH_HEADER)) {
       return
     }
 
     tokenProvider.provide()
       .foreach { token =>
-        requestTemplate.header("Authorization", "Bearer " + token)
+        requestTemplate.header(AUTH_HEADER, s"$BEARER_PREFIX $token")
       }
   }
+}
+
+object BearerAuthInterceptor {
+  val AUTH_HEADER = "Authorization"
+  val BEARER_PREFIX = "Bearer"
 }

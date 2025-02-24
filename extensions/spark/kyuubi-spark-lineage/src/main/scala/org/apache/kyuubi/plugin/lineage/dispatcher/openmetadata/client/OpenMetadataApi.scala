@@ -22,6 +22,7 @@ import feign.{Headers, Param, RequestLine}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
 trait OpenMetadataApi {
+
   @RequestLine(
     "GET /api/v1/search/fieldQuery?fieldName={fieldName}&fieldValue={fieldValue}&index={index}")
   @Headers(Array("Accept: application/json"))

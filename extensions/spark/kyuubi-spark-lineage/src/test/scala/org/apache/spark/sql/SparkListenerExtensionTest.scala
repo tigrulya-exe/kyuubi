@@ -27,7 +27,7 @@ trait SparkListenerExtensionTest {
   protected val catalogImpl: String
   protected def format: String = if (catalogImpl == "hive") "hive" else "parquet"
 
-  protected lazy val spark: SparkSession = {
+  protected lazy val sparkSessionBuilder: SparkSession.Builder = {
     val basePath = Utils.createTempDir() + "/" + getClass.getCanonicalName
     val metastorePath = basePath + "/metastore_db"
     val warehousePath = basePath + "/warehouse"
@@ -39,9 +39,10 @@ trait SparkListenerExtensionTest {
         s"jdbc:derby:;databaseName=$metastorePath;create=true")
       .config("spark.sql.catalogImplementation", catalogImpl)
       .config(StaticSQLConf.WAREHOUSE_PATH.key, warehousePath)
-      .config(sparkConf)
-      .getOrCreate()
+      .config(sparkConf())
   }
+
+  protected lazy val spark: SparkSession = sparkSessionBuilder.getOrCreate()
 
   protected def withTable(t: String*)(f: Seq[String] => Unit): Unit = {
     try {
@@ -61,4 +62,19 @@ trait SparkListenerExtensionTest {
 
   def sparkConf(): SparkConf = new SparkConf()
 
+  def withSparkSession[T](sc: SparkSession)(f: SparkSession => T): T = {
+    try {
+      f(sc)
+    } finally {
+      stop(sc)
+    }
+  }
+
+  def stop(spark: SparkSession): Unit = {
+    if (spark != null) {
+      spark.stop()
+    }
+    // To avoid RPC rebinding to the same port, since it doesn't unbind immediately on shutdown
+    System.clearProperty("spark.driver.port")
+  }
 }

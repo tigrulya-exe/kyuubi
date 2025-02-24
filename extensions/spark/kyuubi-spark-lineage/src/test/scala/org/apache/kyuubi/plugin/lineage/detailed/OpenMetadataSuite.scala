@@ -17,12 +17,11 @@
 
 package org.apache.kyuubi.plugin.lineage.detailed
 
+import org.apache.kyuubi.KyuubiFunSuite
+import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
 import org.apache.spark.SparkConf
 import org.apache.spark.kyuubi.lineage.LineageConf.DISPATCHERS
 import org.apache.spark.sql.SparkListenerExtensionTest
-
-import org.apache.kyuubi.KyuubiFunSuite
-import org.apache.kyuubi.plugin.lineage.helper.SparkListenerHelper.SPARK_RUNTIME_VERSION
 
 class OpenMetadataSuite extends KyuubiFunSuite
   with SparkListenerExtensionTest {
@@ -98,4 +97,17 @@ class OpenMetadataSuite extends KyuubiFunSuite
       }
     }
   }
+
+  test("second") {
+    withTable("test_table0") { _ =>
+      spark.sql("create table test_table0(a string, b int, c int)")
+      spark.sql("create table test_table1(a string, d int)")
+      spark.sql("insert into test_table1 select a, b + c as d from test_table0").collect()
+
+      Thread.sleep(15000L)
+
+    }
+
+  }
+
 }

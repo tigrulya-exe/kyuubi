@@ -57,20 +57,20 @@ object LineageConf {
     .stringConf
     .createOptional
 
-  val OPEN_METADATA_JWT_KEY = ConfigBuilder("spark.kyuubi.plugin.lineage.openmetadata.jwt")
+  val OPEN_METADATA_JWT = ConfigBuilder("spark.kyuubi.plugin.lineage.openmetadata.jwt")
     .doc("TODO")
     .version("1.9.2")
     .stringConf
     .createOptional
 
-  val OPEN_METADATA_PIPELINE_SERVICE_NAME_KEY = ConfigBuilder(
+  val OPEN_METADATA_PIPELINE_SERVICE_NAME = ConfigBuilder(
     "spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName")
     .doc("TODO")
     .version("1.9.2")
     .stringConf
     .createWithDefault("SparkOnKyuubi")
 
-  val OPEN_METADATA_DATABASE_SERVICE_NAMES_KEY = ConfigBuilder(
+  val OPEN_METADATA_DATABASE_SERVICE_NAMES = ConfigBuilder(
     "spark.kyuubi.plugin.lineage.openmetadata.databaseServiceNames")
     .doc("TODO")
     .version("1.9.2")
