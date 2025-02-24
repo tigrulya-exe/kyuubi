@@ -23,23 +23,23 @@ import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
 trait OpenMetadataApi {
   @RequestLine(
-    "GET /v1/search/fieldQuery?fieldName={fieldName}&fieldValue={fieldValue}&index={index}")
+    "GET /api/v1/search/fieldQuery?fieldName={fieldName}&fieldValue={fieldValue}&index={index}")
   @Headers(Array("Accept: application/json"))
   def searchEntitiesWithSpecificFieldAndValue(
       @Param("fieldName") fieldName: String,
       @Param("fieldValue") fieldValue: String,
       @Param("index") index: String): OpenMetadataEntitySearchResponse
 
-  @RequestLine("PUT /v1/pipelines")
+  @RequestLine("PUT /api/v1/pipelines")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
   def createOrUpdatePipeline(createPipeline: CreatePipelineRequest): OpenMetadataEntityInfo
 
-  @RequestLine("PUT /v1/services/pipelineServices")
+  @RequestLine("PUT /api/v1/services/pipelineServices")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
   def createOrUpdatePipelineService(
       createPipelineService: CreatePipelineServiceRequest): OpenMetadataEntityInfo
 
-  @RequestLine("PUT /v1/lineage")
+  @RequestLine("PUT /api/v1/lineage")
   @Headers(Array("Content-Type: application/json", "Accept: application/json"))
   def addLineageEdge(addLineage: AddLineageRequest): Unit
 }

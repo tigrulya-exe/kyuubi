@@ -20,20 +20,9 @@ package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.RestOpenMetadataClient._
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model._
 
-class RestOpenMetadataClient(
-    serverAddress: String,
-    jwt: String = null) extends OpenMetadataClient {
+class RestOpenMetadataClient(apiBuilder: OpenMetadataApiBuilder) extends OpenMetadataClient {
 
-  private lazy val openMetadataApi: OpenMetadataApi = {
-    val authTokenProvider = if (jwt != null) {
-      new StaticAuthenticationTokenProvider(jwt)
-    } else {
-      NoOpAuthenticationTokenProvider
-    }
-
-    new OpenMetadataClientFactory(serverAddress, authTokenProvider)
-      .buildClient()
-  }
+  private lazy val openMetadataApi: OpenMetadataApi = apiBuilder.build()
 
   override def getTableEntity(fullyQualifiedNameTemplate: String): Option[OpenMetadataEntity] = {
     val searchResult = openMetadataApi.searchEntitiesWithSpecificFieldAndValue(
@@ -47,9 +36,9 @@ class RestOpenMetadataClient(
   }
 
   override def addLineage(
-      from: OpenMetadataEntity,
-      to: OpenMetadataEntity,
-      lineageDetails: LineageDetails): Unit = {
+    from: OpenMetadataEntity,
+    to: OpenMetadataEntity,
+    lineageDetails: LineageDetails): Unit = {
     val request = AddLineageRequest(
       LineageEdge(
         fromEntity = from.toReference,
@@ -67,9 +56,9 @@ class RestOpenMetadataClient(
   }
 
   override def createPipelineIfNotExists(
-      pipelineService: String,
-      pipeline: String,
-      description: String): OpenMetadataEntity = {
+    pipelineService: String,
+    pipeline: String,
+    description: String): OpenMetadataEntity = {
     val createPipelineRequest = CreatePipelineRequest(
       service = pipelineService,
       name = pipeline,
@@ -87,4 +76,14 @@ object RestOpenMetadataClient {
   private val PIPELINE_ENTITY_TYPE = "pipeline"
   private val PIPELINE_SERVICE_ENTITY_TYPE = "pipelineService"
   private val PIPELINE_SERVICE_TYPE = "Spark"
+
+  def apply(serverAddress: String, jwt: String): RestOpenMetadataClient = {
+    val authTokenProvider = jwt match {
+      case null => NoOpAuthenticationTokenProvider
+      case token => new StaticAuthenticationTokenProvider(token)
+    }
+
+    new RestOpenMetadataClient(
+      new DefaultOpenMetadataApiBuilder(serverAddress, authTokenProvider))
+  }
 }

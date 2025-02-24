@@ -18,10 +18,10 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata
 
 import org.apache.spark.sql.execution.QueryExecution
-
 import org.apache.kyuubi.plugin.lineage.{ColumnLineage, Lineage}
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client.OpenMetadataClient
 import org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.model.{EntityColumnLineage, LineageDetails, OpenMetadataEntity}
+import org.apache.spark.kyuubi.lineage.SparkContextHelper
 
 class OpenMetadataLineageLogger(
     val openMetadataClient: OpenMetadataClient,
@@ -39,7 +39,7 @@ class OpenMetadataLineageLogger(
 
     val pipeline = openMetadataClient.createPipelineIfNotExists(
       pipelineService.fullyQualifiedName,
-      getPipelineName(execution),
+      getPipelineName,
       sqlQuery)
 
     val entityColumnLineage = buildEntityColumnsLineage(
@@ -51,7 +51,7 @@ class OpenMetadataLineageLogger(
       toTable <- outputTableEntities.values) {
       val lineageDetails = LineageDetails(
         pipeline.toReference,
-        execution.toString(),
+        formatAsCode(execution.sparkPlan.toString()),
         sqlQuery,
         getEntityColumnsLineage(fromTable, toTable, entityColumnLineage))
 
@@ -175,9 +175,7 @@ class OpenMetadataLineageLogger(
     }
   }
 
-  private def getPipelineName(execution: QueryExecution): String = {
-    execution.sparkSession.conf.get("spark.app.name") + "_" + execution.id
-  }
+  private def getPipelineName: String = SparkContextHelper.globalSparkContext.appName
 
   private def splitColumnName(fullColumnName: String): (String, String) = {
     fullColumnName.lastIndexOf('.') match {
@@ -189,4 +187,7 @@ class OpenMetadataLineageLogger(
 
   private def extractTableName(fullColumnName: String): String =
     splitColumnName(fullColumnName)._1
+
+  private def formatAsCode(rawText: String): String =
+    s"<pre><code>$rawText</code></pre>"
 }

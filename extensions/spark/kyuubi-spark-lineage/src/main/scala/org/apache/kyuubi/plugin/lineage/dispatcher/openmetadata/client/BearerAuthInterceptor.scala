@@ -22,8 +22,7 @@ import feign.{RequestInterceptor, RequestTemplate}
 class BearerAuthInterceptor(
     val tokenProvider: AuthenticationTokenProvider) extends RequestInterceptor {
   override def apply(requestTemplate: RequestTemplate): Unit = {
-    if (requestTemplate.url.contains("version")
-      || requestTemplate.headers.containsKey("Authorization")) {
+    if (requestTemplate.headers.containsKey("Authorization")) {
       return
     }
 

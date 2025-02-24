@@ -46,29 +46,34 @@ class OpenMetadataSuite extends KyuubiFunSuite
         "spark.sql.queryExecutionListeners",
         "org.apache.kyuubi.plugin.lineage.SparkOperationLineageQueryExecutionListener")
       .set(DISPATCHERS.key, "OPEN_METADATA")
-      .set("spark.app.name", "test_spark_app_name")
-      .set("spark.kyuubi.plugin.lineage.openmetadata.server", "http://localhost:8585/api")
-      .set("spark.kyuubi.plugin.lineage.openmetadata.databaseServiceNames", "NewHive,mysql_sample")
+      .set("spark.app.name", "2_new_local_app_name")
+      .set("spark.kyuubi.plugin.lineage.openmetadata.server",
+        "http://hdfs-kafka-tiered-storage-test-1.ru-central1-a.internal:8585/")
+// .set("spark.kyuubi.plugin.lineage.openmetadata.databaseServiceNames", "NewHive,mysql_sample")
       .set(
         "spark.kyuubi.plugin.lineage.openmetadata.jwt",
-        "eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLCJhbGciOiJSUzI1" +
-          "NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFkYXRhLm9yZyIsInN1YiI6ImRhdG" +
-          "FpbnNpZ2h0c2FwcGxpY2F0aW9uYm90Iiwicm9sZXMiOltudWxsXSwiZW1haWwiOiJkYXRh" +
-          "aW5zaWdodHNhcHBsaWNhdGlvbmJvdEBvcGVubWV0YWRhdGEub3JnIiwiaXNCb3QiOnRydW" +
-          "UsInRva2VuVHlwZSI6IkJPVCIsImlhdCI6MTczOTc5NDU3MSwiZXhwIjpudWxsfQ.C8eLTd" +
-          "L7dlwqb2akNTbbMY0xnzZd3oqfnV8Bwg6kC48PufFfv0MSvv27Zhem6Fw7nIVdPFHpEz6yxd2" +
-          "sfwyb1mA2Vj_bK1ayvZCR-AsJQQRZksxHYlWZ_q31E5mRqLRZQEpoTGgHyg8C1D6kttc4x6" +
-          "JMO6rIpjZvn3Zu-ytwtciEBZLnnQB5w2J-Xo9P0MYLwiYScGAjPdDj3q4jeSFPAn5FNBxm0odi" +
-          "r-DMejweCywyzx_cW2cDGlsO1KVIUFJr9hnZYl69ZvdwXJELcWk8y7PR4RVgLjVvNJ5_ol1hdef1" +
-          "lbfFYzuzXlvS-x22rW_l3HDB09OOlcv5i-FkZU_6yA")
+        "eyJraWQiOiJHYjM4OWEtOWY3Ni1nZGpzLWE5MmotMDI0MmJrOTQzNTYiLC" +
+          "JhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJvcGVuLW1ldGFk" +
+          "YXRhLm9yZyIsInN1YiI6ImRhdGFpbnNpZ2h0c2FwcGxpY2F0aW9uYm90Iiwi" +
+          "cm9sZXMiOltudWxsXSwiZW1haWwiOiJkYXRhaW5zaWdodHNhcHBsaWNhdGlv" +
+          "bmJvdEBvcGVubWV0YWRhdGEub3JnIiwiaXNCb3QiOnRydWUsInRva2VuVHlw" +
+          "ZSI6IkJPVCIsImlhdCI6MTc0MDM5MDQyNywiZXhwIjpudWxsfQ.biKQ82BMz" +
+          "IQsbZc2z-Vl8erObAkBkEJCtmhV9xblW3XLTFonk2wSv6HCKAIVWHnHIPFnR" +
+          "NG3O8-IZ4piOWmzhQ2AD0nqVdWkzXmuZSg7YBccI0jxFHTYa9WklYt6gb8yF" +
+          "qgTcCutefUtNQzwut0u2Bt0o_9K4Ej2O_eBOiAHDCq3fbpjiFgyQxZHe3vGx" +
+          "jG1wPGItMie9YJYWIaCaL60GDqCeCmmMOq9_L6S9z9fKK1e5p5pqUcIhPHq1" +
+          "srunTORrNqhXKoGyQQZhroAECUTlTn1qz0bI-lsGIksMd_a3A9WVkDZJ0ljr" +
+          "QXrwdq632xQKkR6POuC5taKIsp_0D8fiQ")
       .set("spark.kyuubi.plugin.lineage.openmetadata.pipelineServiceName", "HIVEEEEEE")
   }
 
   test("lineage event was written to HDFS") {
     withTable("Users") { _ =>
       withTable("Categories") { _ =>
-        spark.sql("create table newtable3(column1 varchar(100))")
-        spark.sql("create table newtable5(column1 varchar(100))")
+        spark.sql("create table src1(str_col string, other_col int, another_col int)")
+        spark.sql("create table src2(str_col2 string, some_col int, another_col int)")
+        spark.sql("create table simple_join_dest(" +
+          "src1_col string, src2_col string, another_col int)")
 
 //        val tableDirectory = getClass.getResource("/").getPath + "table_directory"
 //        val directory = File(tableDirectory).createDirectory()
@@ -77,8 +82,18 @@ class OpenMetadataSuite extends KyuubiFunSuite
 //                                     |USING parquet
 //                                     |SELECT * FROM Users""".stripMargin
 
-        val sqlQuery = "insert into newtable3 select column1 from newtable5"
+        val sqlQuery = "insert into simple_join_dest select src1.str_col, src2.str_col2, " +
+          "src1.other_col from src1 join src2 on src1.str_col = src2.str_col2;"
+//        val sqlQuery = "insert into newtable3 select column1 from newtable5"
         spark.sql(sqlQuery).collect()
+
+
+        spark.sql("create table newtable3(column1 varchar(100))")
+        spark.sql("create table newtable4(column1 varchar(100))")
+
+        val sqlQuery2 = "insert into newtable3 select column1 from newtable4"
+        spark.sql(sqlQuery2).collect()
+
         Thread.sleep(5000L)
       }
     }

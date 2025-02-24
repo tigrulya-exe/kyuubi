@@ -47,7 +47,7 @@ object OpenMetadataLineageDispatcher {
   def apply(): OpenMetadataLineageDispatcher = {
     val conf = OpenMetadataConfig()
     val lineageLogger = new OpenMetadataLineageLogger(
-      new RestOpenMetadataClient(conf.serverAddress, conf.jwt),
+      RestOpenMetadataClient(conf.serverAddress, conf.jwt),
       conf.databaseServiceNames,
       conf.pipelineServiceName)
     new OpenMetadataLineageDispatcher(lineageLogger)

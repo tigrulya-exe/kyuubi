@@ -18,28 +18,23 @@
 package org.apache.kyuubi.plugin.lineage.dispatcher.openmetadata.client
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind._
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import feign.Feign
-import feign.Logger.Level
 import feign.jackson.{JacksonDecoder, JacksonEncoder}
 import feign.okhttp.OkHttpClient
 import feign.slf4j.Slf4jLogger
 
-class OpenMetadataClientFactory(
-    serverAddress: String,
-    authTokenProvider: AuthenticationTokenProvider) {
+trait OpenMetadataApiBuilder {
+  def build(): OpenMetadataApi
+}
 
-  private val basePath = if (serverAddress.endsWith("/")) {
-    serverAddress
-  } else {
-    serverAddress + "/"
-  }
+class DefaultOpenMetadataApiBuilder(
+  val serverAddress: String,
+  authTokenProvider: AuthenticationTokenProvider) extends OpenMetadataApiBuilder {
 
   private lazy val objectMapper = new ObjectMapper()
-    .enable(SerializationFeature.WRITE_ENUMS_USING_TO_STRING)
-    .enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING)
     .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
     .disable(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -51,11 +46,10 @@ class OpenMetadataClientFactory(
     .encoder(new JacksonEncoder(objectMapper))
     .decoder(new JacksonDecoder(objectMapper))
     .requestInterceptor(new BearerAuthInterceptor(authTokenProvider))
-    .logLevel(Level.FULL)
     .logger(new Slf4jLogger)
     .client(new OkHttpClient)
 
-  def buildClient(): OpenMetadataApi = {
-    feignBuilder.target(classOf[OpenMetadataApi], basePath)
+  override def build(): OpenMetadataApi = {
+    feignBuilder.target(classOf[OpenMetadataApi], serverAddress)
   }
 }
